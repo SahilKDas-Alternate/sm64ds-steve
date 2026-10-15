@@ -1,5 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.16)
 project(sm64ds-port C CXX)
+option(SM64DS_STEVE_BUILD "Build the opt-in Minecraft 1.18 IPC frontend" ON)
 # Link the static CRT so shipped exes never depend on the VC++ redist (CMP0091).
 # Release 0.1.6 shipped dynamically linked because nothing pinned this and CMake
 # defaults to the DLL runtime, so a player without the redist could not start the
@@ -24606,3 +24607,27 @@ foreach(_tpcore1 walk_window walk_window_hires)
         target_sources(${_tpcore1} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/hal/pcore.cpp")
     endif()
 endforeach()
+
+# Original Minecraft 1.18 frontend, opt-in at runtime with SM64DS_STEVE.
+# Smoke targets retain their original ABI and do not link the frontend.
+if(SM64DS_STEVE_BUILD)
+    # Keep recovered ROM sources intact. The shared hosted health seat forwards
+    # events only when the game frontend registers its hook; smoke hooks are null.
+    get_target_property(_steve_shared_sources port_slice_shared SOURCES)
+    list(FILTER _steve_shared_sources EXCLUDE REGEX "GiveHealth\\.c$")
+    set_property(TARGET port_slice_shared PROPERTY SOURCES "${_steve_shared_sources}")
+    target_sources(port_slice_shared PRIVATE steve/health.cpp)
+    # Patch only the hosted copy. The recovered sphere walk remains ROM-identical.
+    set(_steve_sphere_input "${CMAKE_CURRENT_BINARY_DIR}/host-src/src/_ZN7dBgW_Kc10DetectClsnER12dBgCh_SphCrr.cpp")
+    set(_steve_sphere_output "${CMAKE_CURRENT_BINARY_DIR}/steve_sphere.cpp")
+    add_custom_command(OUTPUT "${_steve_sphere_output}"
+        COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/steve/patch_sphere.py" "${_steve_sphere_input}" "${_steve_sphere_output}"
+        DEPENDS "${_steve_sphere_input}" "${CMAKE_CURRENT_SOURCE_DIR}/steve/patch_sphere.py"
+        VERBATIM)
+    get_target_property(_steve_walk_sources walk_window SOURCES)
+    list(FILTER _steve_walk_sources EXCLUDE REGEX "_ZN7dBgW_Kc10DetectClsnER12dBgCh_SphCrr\\.cpp$")
+    set_property(TARGET walk_window PROPERTY SOURCES "${_steve_walk_sources}")
+    target_sources(walk_window PRIVATE "${_steve_sphere_output}")
+    target_sources(walk_window PRIVATE steve/native.cpp steve/client.cpp steve/assets.cpp)
+    target_link_libraries(walk_window PRIVATE ws2_32)
+endif()

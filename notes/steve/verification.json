@@ -1,0 +1,569 @@
+{
+  "base_commit": "bf42a2418",
+  "minecraft": "1.18",
+  "reports": {
+    "server-test": {
+      "passed": [
+        "live 20-Hz backend snapshots advance",
+        "placed block state reaches frontend",
+        "vanilla mining completes",
+        "vanilla mining consumes tool durability",
+        "vanilla redstone primes moving TNT",
+        "vanilla TNT fuse and explosion complete",
+        "zombie is a real vanilla entity",
+        "skeleton is a real vanilla entity",
+        "creeper is a real vanilla entity",
+        "spider is a real vanilla entity",
+        "pig is a real vanilla entity",
+        "cow is a real vanilla entity",
+        "sheep is a real vanilla entity",
+        "chicken is a real vanilla entity",
+        "vanilla boat entity is synchronized",
+        "boat passenger state is synchronized",
+        "native inventory exposes vanilla container slots",
+        "Minecraft inventory persists as vanilla NBT"
+      ],
+      "minecraft": "1.18",
+      "tick": 7369
+    },
+    "mechanics-test": [
+      "Vanilla 2x2 crafting consumes one log and produces four planks",
+      "Vanilla crafting-table container exposes 3x3 grid and output",
+      "Native underwater state consumes Minecraft oxygen at 20 Hz",
+      "Air refill restores oxygen"
+    ],
+    "bomber-test": {
+      "drops": [
+        [
+          7739,
+          22.480801013240125,
+          119.01999998092651,
+          8.494396527297795
+        ],
+        [
+          7749,
+          23.507731717603747,
+          119.01999998092651,
+          8.48155493172817
+        ],
+        [
+          7759,
+          25.028558216174133,
+          119.01999998092651,
+          8.507456045364961
+        ],
+        [
+          7769,
+          25.4807813364896,
+          119.01999998092651,
+          8.5055356095545
+        ],
+        [
+          7779,
+          27.029464870109223,
+          119.01999998092651,
+          8.495404476998374
+        ],
+        [
+          7789,
+          27.482211652502883,
+          119.01999998092651,
+          8.490858080564067
+        ],
+        [
+          7799,
+          29.029268473095726,
+          119.01999998092651,
+          8.505359658971429
+        ],
+        [
+          7816,
+          30.643409232376143,
+          117.94369772274794,
+          8.509999990463257
+        ],
+        [
+          7827,
+          30.47367693245178,
+          117.64522376791152,
+          8.509999990463257
+        ],
+        [
+          7838,
+          31.31840164231835,
+          117.31271929217182,
+          8.52200896362774
+        ],
+        [
+          7845,
+          33.59402137825964,
+          118.2074466562545,
+          8.390859216917306
+        ],
+        [
+          7849,
+          33.483144755940884,
+          119.01999998092651,
+          8.489234279142693
+        ],
+        [
+          7859,
+          34.48639008885948,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          7869,
+          36.02276993490523,
+          119.01999998092651,
+          8.484607509570196
+        ],
+        [
+          7879,
+          37.02447850292083,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          7889,
+          37.50364392361371,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          7899,
+          38.48010020889342,
+          119.01999998092651,
+          8.5019995784387
+        ],
+        [
+          7910,
+          40.552778501063585,
+          118.97999998092651,
+          8.477779967011884
+        ],
+        [
+          7926,
+          40.56105697643943,
+          117.94369772274794,
+          8.509999990463257
+        ],
+        [
+          7929,
+          42.02998943114653,
+          119.01999998092651,
+          8.50065010949038
+        ],
+        [
+          7939,
+          42.48223934712587,
+          119.01999998092651,
+          8.509195608086884
+        ],
+        [
+          7949,
+          44.02920766163152,
+          119.01999998092651,
+          8.50557366432622
+        ],
+        [
+          7959,
+          44.48056703660404,
+          119.01999998092651,
+          8.495271370979026
+        ],
+        [
+          7969,
+          46.02924999600509,
+          119.01999998092651,
+          8.505425647832453
+        ],
+        [
+          7979,
+          47.024010881606955,
+          119.01999998092651,
+          8.485727817285806
+        ],
+        [
+          7989,
+          47.48077726183692,
+          119.01999998092651,
+          8.505521443439648
+        ],
+        [
+          7999,
+          48.483972080401145,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          8013,
+          49.547107418009546,
+          118.6279203009265,
+          8.509999990463257
+        ],
+        [
+          8022,
+          50.49133378174156,
+          118.78318398092651,
+          8.509999990463257
+        ],
+        [
+          8029,
+          51.489696826261934,
+          119.01999998092651,
+          8.509999990463257
+        ]
+      ],
+      "unique_tnt": 30,
+      "retained_tnt": true,
+      "engine_traveled": true,
+      "moving_piston_snapshots": true,
+      "destroyed_floor_cells": 264,
+      "materials_consumed": true
+    },
+    "swimming-test": {
+      "ascent_blocks": 4.09294098027496,
+      "descent_blocks": 4.1458409789874935,
+      "distance_blocks": 4.0577779160780185,
+      "start": {
+        "x": 0.5,
+        "y": 66.0,
+        "z": 0.5199999995529652
+      },
+      "end": {
+        "version": "1",
+        "tick": "10359",
+        "ack": "392",
+        "level": "21",
+        "x": "0.5",
+        "y": "64.0",
+        "z": "5.390226742784567",
+        "yaw": "0.0",
+        "pitch": "0.0",
+        "health": "20.0",
+        "air": "195.0",
+        "food": "20",
+        "flags": "16",
+        "mining": "-1",
+        "slot": "0"
+      }
+    },
+    "flight-test": {
+      "distance_blocks": 46.76864701870363,
+      "start": {
+        "x": 0.5,
+        "y": 100.25664738520813,
+        "z": 2.037625035678502
+      },
+      "end": {
+        "version": "1",
+        "tick": "4028",
+        "ack": "204",
+        "level": "102",
+        "x": "0.5",
+        "y": "96.86426124826261",
+        "z": "48.806272054382134",
+        "yaw": "0.0",
+        "pitch": "-10.0",
+        "health": "20.0",
+        "air": "300.0",
+        "food": "17",
+        "flags": "3",
+        "mining": "-1",
+        "slot": "0"
+      }
+    },
+    "isolation-test": [
+      "Level/area coordinates isolated in separate vanilla arenas",
+      "Returning to a level replays its blocks",
+      "Mined terrain air cells survive level switches"
+    ],
+    "respawn-test": {
+      "death_verified": true,
+      "respawn_health": 20,
+      "inventory_preserved": true,
+      "scene_position": {
+        "version": "1",
+        "tick": "6589",
+        "ack": "3837",
+        "level": "912",
+        "x": "20.0",
+        "y": "80.0",
+        "z": "8.0",
+        "yaw": "0.0",
+        "pitch": "0.0",
+        "health": "20.0",
+        "air": "300.0",
+        "food": "20",
+        "flags": "0",
+        "mining": "-1",
+        "slot": "0"
+      }
+    },
+    "equipment-test": {
+      "chest_restored_after_flight": true,
+      "vanilla_bow_release": true,
+      "ammo_consumed": true,
+      "bow_durability": 1
+    },
+    "clean-start-test": {
+      "clean_start": true,
+      "health": 20,
+      "air": 300,
+      "survival": true,
+      "starter_inventory": true,
+      "cached_blocks": 0
+    },
+    "terrain-surface": {
+      "measured_surface_y": 64.54000002145767,
+      "placed_slab_y": 64.5,
+      "rounding_error_removed_blocks": 0.46,
+      "replacement_uses_official_shape": true
+    },
+    "terrain-surface-persistence": {
+      "measured_surface_y": 64.54000002145767,
+      "placed_slab_y": 64.5,
+      "rounding_error_removed_blocks": 0.46,
+      "replacement_uses_official_shape": true,
+      "loaded_from_persistent_cache": true
+    },
+    "minecart-input": {
+      "mounted": true,
+      "boat_input_ignored_for_minecart": true,
+      "persistent_after_60_ticks": true,
+      "dismounted": true
+    },
+    "clean-start": {
+      "clean_start": true,
+      "health": 20,
+      "air": 300,
+      "survival": true,
+      "starter_inventory": true,
+      "bomber_materials": true,
+      "cached_blocks": 0,
+      "entities": 0
+    },
+    "block-entity-test": {
+      "persisted": false,
+      "styled_text": true,
+      "unicode": true,
+      "sign_text": "STEVE\nSM64 DS\nNBT works\nHello \u4e16\u754c",
+      "sign_rgb": 255,
+      "sign_glowing": true,
+      "banner_layers": "base:11546150,cross:16383998,border:3949738,circle:16701501",
+      "chest": {
+        "open": 1.0,
+        "closed": 0.0,
+        "slots": 63,
+        "real_item_transfer": true
+      },
+      "shulker": {
+        "open": 1.0,
+        "closed": 0.0,
+        "slots": 63,
+        "real_item_transfer": true
+      }
+    },
+    "block-entity-persistence-test": {
+      "persisted": true,
+      "styled_text": true,
+      "unicode": true,
+      "sign_text": "STEVE\nSM64 DS\nNBT works\nHello \u4e16\u754c",
+      "sign_rgb": 255,
+      "sign_glowing": true,
+      "banner_layers": "base:11546150,cross:16383998,border:3949738,circle:16701501",
+      "chest": {
+        "open": 1.0,
+        "closed": 0.0,
+        "slots": 63,
+        "real_item_transfer": true
+      },
+      "shulker": {
+        "open": 1.0,
+        "closed": 0.0,
+        "slots": 63,
+        "real_item_transfer": true
+      }
+    },
+    "block-animation-test": {
+      "ender_chest": {
+        "open_close": true,
+        "slots": 63
+      },
+      "double_chest": {
+        "open_close": true,
+        "slots": 90
+      },
+      "bell_ring_settles": true,
+      "dragon_redstone_state": true,
+      "conduit": {
+        "active": true,
+        "hunting": true,
+        "frame": 42
+      },
+      "removed_entity_disappears": true
+    },
+    "terrain-import-race-test": {
+      "placement_preserved": true,
+      "original_imported_once": true,
+      "mined_air_preserved": true,
+      "original_id_immutable": true,
+      "same_batch_race_preserved": true
+    }
+  },
+  "native_verified": [
+    "health",
+    "craft",
+    "flight",
+    "boat",
+    "swim",
+    "hole",
+    "slab",
+    "fence",
+    "stock"
+  ],
+  "workspace_cap_bytes": 1073741824,
+  "limits": [
+    "Minecraft terrain slopes remain approximated within a column; native Nintendo walking retains its original collision mesh.",
+    "Signs use the available Unicode BMP font pages, with a 96-codepoint per-line display bound and a question-mark fallback for absent glyphs.",
+    "Mob rigs remain simpler than the Minecraft client renderer."
+  ],
+  "native_full_regression": [
+    {
+      "scene": 985,
+      "name": "hole",
+      "passed": true
+    },
+    {
+      "scene": 986,
+      "name": "slab",
+      "passed": true
+    },
+    {
+      "scene": 987,
+      "name": "fence",
+      "passed": true
+    },
+    {
+      "scene": 988,
+      "name": "swim",
+      "passed": true
+    },
+    {
+      "scene": 989,
+      "name": "boat",
+      "passed": true
+    },
+    {
+      "scene": 990,
+      "name": "flight",
+      "passed": true
+    },
+    {
+      "scene": 991,
+      "name": "craft",
+      "passed": true
+    },
+    {
+      "scene": 992,
+      "name": "health",
+      "passed": true
+    },
+    {
+      "scene": 993,
+      "name": "special",
+      "passed": true
+    },
+    {
+      "scene": 994,
+      "name": "stock",
+      "passed": true
+    }
+  ],
+  "native_final_targeted": {
+    "stable_landing": true,
+    "slab": true,
+    "source_hash": "3812566103C2E2F28CB14D2845EA619D459B438D2174AE7A78C2AC8D7C28CB65",
+    "hole": true,
+    "fence": true,
+    "special": true
+  },
+  "assets": {
+    "textures": 1968,
+    "official_block_states": 20342,
+    "item_preview_models": 2,
+    "items": 1101,
+    "unresolved_model_fallbacks": 0,
+    "cpp_loader_passed": true,
+    "python_special_model_tests": 4,
+    "unicode_font_pages": 222,
+    "decoded_texture_budget_bytes": 134217728
+  },
+  "qa_archive": {
+    "verified": true,
+    "files": 101,
+    "source_bytes": 33752061,
+    "archive_bytes": 2859816,
+    "archive": "C:\\SahilAppProjects\\sm64ds-steve\\build\\steve\\qa-world-block-entities.zip"
+  },
+  "qa_world_removed": true,
+  "clean_runtime_verified": {
+    "clean_start": true,
+    "health": 20,
+    "air": 300,
+    "survival": true,
+    "starter_inventory": true,
+    "bomber_materials": true,
+    "cached_blocks": 0,
+    "entities": 0
+  },
+  "tnt_behavior": "Bridge compatibility hook retains piston-moved TNT through finalization; subsequent priming, entities, fuses and explosions use the official Minecraft 1.18 server.",
+  "workspace_final_bytes": 852723027,
+  "native_block_entities": {
+    "checks": {
+      "chest_open_close": true,
+      "shulker_open": true,
+      "powered_dragon": true,
+      "sign_unicode_and_styles": true,
+      "banner_layers": true,
+      "conduit_full_frame": true,
+      "conduit_opened_frame_eye": true,
+      "crafting_regression": true,
+      "stable_carved_floor": true,
+      "slab_collision": true,
+      "stock_game": true,
+      "dsstate_guard": true,
+      "facecycle_guard": true,
+      "global_overrun_guard": true,
+      "kernel32_only_imports": true
+    },
+    "sources_sha256": {
+      "port/steve/native.cpp": "4442ad9d12f91a9654fc447e6de46be10c5ca0a8ffa9d2497f570c35e7c1f7d1",
+      "port/steve/block_entities.inl": "76c06b57b49c7b509c6c21d82ef1dfbed187e7a49b9b85b96cbdaac1c52d6bc2",
+      "port/steve/client.h": "c4d7155b2f5059206f10f491411e8d5ef2d06167c537494e592adf3365c9b051",
+      "port/steve/client.cpp": "eed2f53e3b37441f7bd6450c2152b69ee05a0b540f65491ae2886e54e6a22407",
+      "port/steve/assets.cpp": "fc6f6c589cd32ba5e900aea1721efe7a73fd961e45e9b62f3db84956c9da41f9",
+      "port/steve/server/src/steve/Backend.java": "fe93eace8afb5290205f9d3a7027113e02e6f2e18c245490603a23eb4041af8b",
+      "port/steve/server/src/steve/Visuals.java": "6414fa619ec9f60711887dc02f79de3b08238b56b58de4b50dc2bb2b5f263ec3",
+      "port/steve/server/src/steve/Reflect.java": "6380ab579605ea1f25b356f609fac14d0de7ed2a23e6a980570b0b01f365f597"
+    },
+    "executable_sha256": "bf272db852aab8e89befdf5bf45992f4439c9f3aef7b8192cdb1ec5646105eff",
+    "screenshots_visually_reviewed": [
+      "animated-test.bmp",
+      "conduit-test.bmp"
+    ],
+    "native_scenes": {
+      "decorated": 992,
+      "conduit": 1002,
+      "crafting": 994,
+      "hole": 997,
+      "slab": 998
+    },
+    "texture_count": 1968,
+    "test_builds": {
+      "animated_and_crafting_native_cpp_sha256": "14020cb80ced1cf9b7670a254b541a499f7a420a027b422b80a6f5c953043c5a",
+      "conduit_hole_slab_stock_native_cpp_sha256": "4442ad9d12f91a9654fc447e6de46be10c5ca0a8ffa9d2497f570c35e7c1f7d1"
+    }
+  }
+}

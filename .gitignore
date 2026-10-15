@@ -136,3 +136,6 @@ playlog/
 # session run records live outside the repo (the orchestration dir), never in it
 runs/
 tmpdir/
+
+# Locally supplied Minecraft runtime and downloaded game assets.
+/runtime/

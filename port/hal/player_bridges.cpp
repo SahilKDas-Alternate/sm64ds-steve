@@ -23,6 +23,7 @@
 #include "ModelAnim.h"
 
 #include "dsstate_seg.h"
+#include "../steve/native.h"
 /* SYNC4: see the case for 0x020e0d28 inside player_states.inc. */
 extern "C" int __fastcall port_player_st_crazedcrate_cleanup(void *self, void *);
 #pragma comment(linker, "/alternatename:@port_player_st_crazedcrate_cleanup@8=?St_CrazedCrate_Cleanup@Player@@QAEHXZ")
@@ -75,7 +76,12 @@ int hal_player_st_walk_init(void *p)
 int hal_player_st_walk_main(void *p)
 { return ((Player *)p)->Player::St_Walk_Main(); }
 int hal_player_behavior(void *p)
-{ return ((Player *)p)->Player::Behavior(); }
+{
+    steve::native_before_player(p);
+    int result=((Player *)p)->Player::Behavior();
+    steve::native_after_player(p);
+    return result;
+}
 /* the walk demo renders the Player's current body ModelAnim in place:
    identity model matrix, bones posed from the anim Behavior advanced */
 /* level model render for the window: identity world matrix (stage models
@@ -1617,6 +1623,7 @@ void hal_render_player_world(void *player)
     unsigned id = _ZNK6Player14GetBodyModelIDEjb(c, *(int *)(c + 8) & 0xff, 0);
     ModelAnim *ma = ((ModelAnim **)(c + 0xdc))[id];
     if (!ma) return;
+    if (steve::native_render_player(player)) return;
     /* THE BODY MATRIX IS THE ONE THE SEAT ALREADY WROTE, and this function
        must not build its own. That is the whole of the Yoshi head-vs-body
        separation the field report described as the head coming off at speed

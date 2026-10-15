@@ -9,6 +9,7 @@
 //
 //cpp
 #include "dBgW_Kc.h"
+#include "../steve/native.h"
 
 struct dBgPi { u8 raw[0x1c]; };
 struct SurfaceInfo { u8 clps[8]; Vector3 normal; };
@@ -217,6 +218,9 @@ s32 dBgW_Kc::DetectClsn(dBgCh_Lin &ray)
                     hit.x = rel.x + v0->x;
                     hit.y = rel.y + v0->y;
                     hit.z = rel.z + v0->z;
+                    // Reject this contact, not the entire ray. The octree walk
+                    // must still find a wall or floor beyond the carved cell.
+                    if (steve::native_removed(hit.x / 64.f, hit.y / 64.f, hit.z / 64.f)) continue;
                     dist = Vec3_Dist(&hit, &s) >> 6;
                     if (bestDist <= dist) { ++g_walk_dbg[11]; continue; }
 

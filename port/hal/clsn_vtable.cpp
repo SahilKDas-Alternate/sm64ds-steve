@@ -12,6 +12,9 @@
 #include <string.h>
 
 #include "dBgW_Kc.h"
+#include "dBgCh_Gnd.h"
+#include "../steve/native.h"
+#include <cmath>
 #include "hal/dsstate_seg.h"
 
 // BATCH-3 LINKAGE SEAT bridge. The real dBgW_Kc::DetectClsn(RaycastGround&)
@@ -47,7 +50,9 @@ static void __fastcall slot_norm(void *self, void *, s16 tri, Vector3 *res)
 static void __fastcall slot_orig(void *self, void *, s16 tri, Vector3 *res)
 { ((dBgW_Kc *)self)->dBgW_Kc::GetTriangleOrigin(tri, *res); }
 static int __fastcall slot_ray(void *self, void *, dBgCh_Lin *ray)
-{ return ((dBgW_Kc *)self)->dBgW_Kc::DetectClsn(*ray); }
+{
+    return ((dBgW_Kc *)self)->dBgW_Kc::DetectClsn(*ray);
+}
 
 /* Slot 9 -- dBgW::BeforeClsn, the platform-carry seat. A moving
    collider (a lift, a rotating platform) that an actor is STANDING ON fires
@@ -95,7 +100,19 @@ static void __fastcall slot_beforeclsn(void *self, void *, dBgPi *res,
    fills the result fields in place. */
 static int __fastcall slot_ground(void *self, void *, dBgCh_Gnd *g)
 {
+    const Vector3 original=g->pos;
+    const int originalProbe=g->mProbeHeight;
+    const int priorHeight=static_cast<int>(g->clsnY);
+    const unsigned char priorHit=g->hasClsn;
     int hit = ((dBgW_Kc *)self)->dBgW_Kc::DetectClsn(*g);
+    // Continue below removed voxel cells, preserving the ROM's query and result.
+    for(int retry=0;hit && retry<64 && steve::native_removed(g->pos.x/4096.f,static_cast<int>(g->clsnY)/4096.f,g->pos.z/4096.f);++retry) {
+        float bottom=std::floor(static_cast<int>(g->clsnY)/(4096.f*100.f))*100.f;
+        g->pos.y=static_cast<int>((bottom-.1f)*4096.f);g->mProbeHeight=0;
+        g->clsnY=priorHeight;g->hasClsn=priorHit;
+        hit=((dBgW_Kc *)self)->dBgW_Kc::DetectClsn(*g);
+    }
+    g->pos=original;g->mProbeHeight=originalProbe;
     if (getenv("PORT_TRACE_CLSN"))
         fprintf(stderr, "  [ground] real DetectClsn(RaycastGround) -> hit=%d\n",
                 hit);

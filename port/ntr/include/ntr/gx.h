@@ -47,6 +47,10 @@ struct GxVertex {
     float nx, ny, nz;
 };
 
+using GxHostEmit = void (*)(const GxVertex&,const GxVertex&,const GxVertex&);
+extern bool (*gx_host_triangle_filter)(const GxVertex&,const GxVertex&,const GxVertex&,GxHostEmit);
+void gx_host_filter_scope(bool enabled);
+
 // The bound texture travels with the triangle. Material state is set by the
 // game's C code around each display list, not inside it, so a triangle's
 // texture is whatever was bound when it was assembled.
@@ -100,6 +104,7 @@ struct GxTriangle {
     // POLYGON_ATTR bit 14: this polygon's depth test is EQUAL (within the
     // hardware's tolerance) instead of LESS. See w_depth_fail in gx.cpp.
     uint8_t depth_eq;
+    uint8_t host_overlay; // Host UI follows submission order after the world.
     uint32_t dbg_tex;      // TEXIMAGE_PARAM that was bound (diagnostics only)
 };
 
@@ -570,6 +575,16 @@ void gx_matrix_stack_levels(unsigned &pos_level, unsigned &proj_level);
 // For a caller that needs to report what its own vertices will be transformed
 // by; see the definition for why the projection alone cannot answer it.
 void gx_debug_pos(float out[16]);
+
+// Original host-mod geometry, using the same clipping and raster backends.
+// Coordinates are scene units; the caller supplies the current camera view.
+struct GxHostVertex { float x,y,z,u,v; uint32_t color; };
+void gx_host_quad(const float view[16], const GxHostVertex corners[4],
+                  const uint32_t *pixels, int width, int height, unsigned alpha=31);
+void gx_host_screen_vertices(const GxHostVertex corners[4],const uint32_t *pixels,int width,int height,unsigned alpha=31);
+void gx_host_screen_quad(float x,float y,float w,float h,float u0,float v0,
+                         float u1,float v1,const uint32_t *pixels,int tw,int th,
+                         uint32_t color=0xffffffffu,unsigned alpha=31);
 // the live matrix state, for tracking down a mis-placed draw
 void gx_debug_matrices(int *mode, float pos[16], float proj[16]);
 

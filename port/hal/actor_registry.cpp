@@ -67,6 +67,7 @@
 #include <windows.h>
 
 #include "mod_hooks.h"
+#include "../steve/native.h"
 
 extern "C" {
 
@@ -976,6 +977,7 @@ static unsigned g_k1_n_tick, g_k1_n_render, g_k1_n_pass;   /* whole run */
 
 extern "C" void port_actor_tick(void)
 {
+    steve::native_before_player(nullptr);
     ++g_k1_f_tick;
     ++g_k1_n_tick;
     port_bob_debug_watch();
@@ -1303,6 +1305,7 @@ extern "C" int port_actor_frame_split_forced(void)
 
 extern "C" void port_actor_frame(int level_camera)
 {
+    steve::native_before_player(nullptr);
     k1_arm();
     port_bob_debug_watch();
     port_pound_probe();
@@ -1369,6 +1372,9 @@ extern "C" void port_actor_frame_end(int frame, const char *loop)
     /* run mods1: the plugins' on_frame, after the frame's actor work */
     if (port_mod_hook_frame)
         port_mod_hook_frame();
+    steve::native_after_player(nullptr);
+    steve::native_frame();
+    steve::native_render_world();
 }
 
 /* How many actors are currently on each list -- the read-back that says the

@@ -33,6 +33,10 @@
 #endif
 
 namespace ntr {
+bool (*gx_host_triangle_filter)(const GxVertex&,const GxVertex&,const GxVertex&,GxHostEmit)=nullptr;
+static bool g_host_filter_scope=false;
+void gx_host_filter_scope(bool enabled) {g_host_filter_scope=enabled;}
+
 namespace {
 
 constexpr float FX12 = 1.0f / 4096.0f;
@@ -879,6 +883,13 @@ float near_dist(const GxVertex &v, bool persp) {
 }
 
 void emit_tri_near(const GxVertex &a, const GxVertex &b, const GxVertex &c) {
+    if(g_host_filter_scope && gx_host_triangle_filter) {
+        g_host_filter_scope=false;
+        bool handled=gx_host_triangle_filter(a,b,c,emit_tri_near);
+        g_host_filter_scope=true;
+        if(handled) return;
+    }
+
     // Sutherland-Hodgman against the near plane.
     //
     // THE DISTANCE IS z + w, NOT w. Clipping a perspective triangle at
@@ -1697,7 +1708,7 @@ void emit_tri(const GxVertex &a, const GxVertex &b, const GxVertex &c,
     /* OFF IS ONE COMPARE. smooth_level() is a load of a file-scope int that
        walk_window sets once at boot; with the setting absent it is 0 and this
        function is the same call it always was. */
-    if (smooth_level() > 0) {
+    if (smooth_level() > 0 && !(g_host_filter_scope && gx_host_triangle_filter)) {
         const int pf = smooth_prof_on();
         const long long t0 = pf ? smooth_prof_ticks() : 0;
         const int took = smooth_try(a, b, c, ra, rb, rc);
@@ -3204,6 +3215,60 @@ void gx_debug_proj(float out[16]) {
    scaled wrong at the right depth, and those two have the same symptom. */
 void gx_debug_pos(float out[16]) {
     for (int i = 0; i < 16; ++i) out[i] = g.pos.m[i];
+}
+
+namespace {
+struct HostMaterial {
+    const uint32_t *pixels=g.tex_rgba;
+    int width=g.tw,height=g.th;
+    uint32_t id=g.tex_id, attr=g.poly_attr, image=g_teximage;
+    uint8_t wrap=g.tex_wrap;
+    int scale=g.tex_scale;
+    HostMaterial(const uint32_t *p,int w,int h,unsigned alpha) {
+        gx_bind_texture(p,w,h);
+        g.poly_attr=(3u<<6)|((std::min)(alpha,31u)<<16);
+        g_teximage=6u<<26; // RGBA cutouts and translucent host textures.
+    }
+    ~HostMaterial() {
+        g.tex_rgba=pixels; g.tw=width; g.th=height; g.tex_id=id;
+        g.poly_attr=attr; g_teximage=image; g.tex_wrap=wrap; g.tex_scale=scale;
+    }
+};
+}
+void gx_host_quad(const float view[16],const GxHostVertex corners[4],
+                  const uint32_t *pixels,int width,int height,unsigned alpha) {
+    HostMaterial material(pixels,width,height,alpha);
+    Mat camera; std::memcpy(camera.m,view,sizeof(camera.m));
+    GxVertex v[4]{};
+    for(int i=0;i<4;i++) {
+        const auto &p=corners[i];
+        Vec4 eye=mul(Vec4{p.x,p.y,p.z,1},camera), clip=mul(eye,g.proj);
+        v[i].x=clip.x; v[i].y=clip.y; v[i].z=clip.z; v[i].w=clip.w;
+        v[i].vx=eye.x; v[i].vy=eye.y; v[i].vz=eye.z; v[i].vw=eye.w;
+        v[i].u=p.u; v[i].v=p.v; v[i].color=p.color;
+    }
+    emit_tri_near(v[0],v[1],v[2]); emit_tri_near(v[0],v[2],v[3]);
+}
+void gx_host_screen_vertices(const GxHostVertex corners[4],const uint32_t *pixels,int width,int height,unsigned alpha) {
+    HostMaterial material(pixels,width,height,alpha);GxVertex v[4]{};
+    for(int i=0;i<4;i++) {v[i].x=corners[i].x;v[i].y=corners[i].y;v[i].z=0;v[i].w=.0001f;v[i].u=corners[i].u;v[i].v=corners[i].v;v[i].color=corners[i].color;}
+    size_t first=g.tris.size();push_screen_tri(v[0],v[1],v[2]);push_screen_tri(v[0],v[2],v[3]);
+    for(size_t i=first;i<g.tris.size();++i) g.tris[i].host_overlay=1;
+}
+void gx_host_screen_quad(float x,float y,float w,float h,float u0,float v0,
+                         float u1,float v1,const uint32_t *pixels,int tw,int th,
+                         uint32_t color,unsigned alpha) {
+    HostMaterial material(pixels,tw,th,alpha);
+    GxVertex v[4]{};
+    const float px[4]={x,x+w,x+w,x},py[4]={y,y,y+h,y+h};
+    const float us[4]={u0,u1,u1,u0},vs[4]={v0,v0,v1,v1};
+    for(int i=0;i<4;i++) {
+        v[i].x=px[i]; v[i].y=py[i]; v[i].z=0; v[i].w=0.0001f;
+        v[i].u=us[i]; v[i].v=vs[i]; v[i].color=color;
+    }
+    const size_t first=g.tris.size();
+    push_screen_tri(v[0],v[1],v[2]); push_screen_tri(v[0],v[2],v[3]);
+    for(size_t i=first;i<g.tris.size();++i) g.tris[i].host_overlay=1;
 }
 
 // GXSTAT bits 8-12 and 13 want these. Clamped to the widths the register has
@@ -5633,7 +5698,7 @@ void raster_ref(const RefArgs &ra, int tid, int nt) {
                 const float w0 = n0 / area, w1 = n1 / area, w2 = n2 / area;
                 const float l0 = w1, l1 = w2, l2 = w0;   // barycentric for a, b, c
                 const float z = wdepth ? -(l0 * iwa + l1 * iwb + l2 * iwc) : l0 * a.z + l1 * b.z + l2 * c.z;
-                if (w_depth_fail(z, drow[x], wq, t.depth_eq != 0)) continue;
+                if (!t.host_overlay && w_depth_fail(z, drow[x], wq, t.depth_eq != 0)) continue;
                 // Depth is written only after the texel passes the alpha test
                 // below -- a transparent texel must not occlude what is behind it.
                 // Texture first; the vertex colour modulates it. UVs are
@@ -6696,7 +6761,7 @@ void gx_render(Framebuffer &fb) {
                 const float w0 = n0 / area, w1 = n1 / area, w2 = n2 / area;
                 const float l0 = w1, l1 = w2, l2 = w0;   // barycentric for a, b, c
                 const float z = wdepth ? -(l0 * iwa + l1 * iwb + l2 * iwc) : l0 * a.z + l1 * b.z + l2 * c.z;
-                if (w_depth_fail(z, drow[x], wq, t.depth_eq != 0)) continue;
+                if (!t.host_overlay && w_depth_fail(z, drow[x], wq, t.depth_eq != 0)) continue;
                 // Depth is written only after the texel passes the alpha test
                 // below -- a transparent texel must not occlude what is behind it.
                 // Texture first; the vertex colour modulates it. UVs are

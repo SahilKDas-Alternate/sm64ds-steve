@@ -643,6 +643,8 @@ extern "C" void port_stage_anims_load(void *self);   /* hal/stage_bridges.cpp */
 
 extern "C" unsigned port_stage_render_calls(void) { return g_ren_calls; }
 
+#include "ntr/gx.h"
+#include "../steve/native.h"
 extern "C" int port_stage_rom_render(void *self)
 {
     if (port_level_interlude_live())
@@ -650,5 +652,8 @@ extern "C" int port_stage_rom_render(void *self)
     stage_frame_arm();
     ++g_ren_calls;
     port_stage_anims_load(self);
-    return ((Stage *)self)->Stage::Render();
+    ntr::gx_host_filter_scope(steve::native_enabled());
+    int result=((Stage *)self)->Stage::Render();
+    ntr::gx_host_filter_scope(false);
+    return result;
 }
