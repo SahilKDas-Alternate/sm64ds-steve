@@ -1,0 +1,354 @@
+{
+  "upstream_ref": "refs/heads/release/game-0.9.2",
+  "upstream_commit": "66c188cfea5a2404634f8e4f584478294fd11a5f",
+  "previous_release_commit": "bf42a2418d4396bdd8bb2d61a2cff6cf85c2b743",
+  "upstream_commits": 46,
+  "game_version": "0.9.2",
+  "executable_sha256": "12795c29508547557b39cbc3e9519aac5301eeef4433188115f21df13502aebb",
+  "guards": {
+    "dsstate": true,
+    "facecycle": true,
+    "global_bounds": true,
+    "imports": true
+  },
+  "native_regression": [
+    {
+      "name": "hole",
+      "passed": true,
+      "scene": 900
+    },
+    {
+      "name": "slab",
+      "passed": true,
+      "scene": 901
+    },
+    {
+      "name": "fence",
+      "passed": true,
+      "scene": 902
+    },
+    {
+      "name": "swim",
+      "passed": true,
+      "scene": 903
+    },
+    {
+      "name": "boat",
+      "passed": true,
+      "scene": 904
+    },
+    {
+      "name": "flight",
+      "passed": true,
+      "scene": 905
+    },
+    {
+      "name": "craft",
+      "passed": true,
+      "scene": 906
+    },
+    {
+      "name": "health",
+      "passed": true,
+      "scene": 907
+    },
+    {
+      "name": "special",
+      "passed": true,
+      "scene": 908
+    },
+    {
+      "name": "stock",
+      "passed": true,
+      "scene": 909
+    }
+  ],
+  "animated_blocks": true,
+  "conduit": true,
+  "title_startup": true,
+  "title_touch_intro": true,
+  "screenshots_reviewed": [
+    "v092-animated.bmp",
+    "v092-conduit.bmp",
+    "v092-title.bmp",
+    "v092-title-intro.bmp"
+  ],
+  "audio_smoke": {
+    "ds": {
+      "mix_rate": 32768,
+      "peak": 29637,
+      "non_silent": true
+    },
+    "hq": {
+      "mix_rate": 48000,
+      "peak": 30072,
+      "non_silent": true
+    }
+  },
+  "audio_smoke_scope": "Checks selected mixer and non-silent output; upstream smoke_sdat uses the legacy frame count in both modes, so this is not a duration-parity check.",
+  "server_reports": {
+    "block-entity-test": {
+      "persisted": false,
+      "styled_text": true,
+      "unicode": true,
+      "sign_text": "STEVE\nSM64 DS\nNBT works\nHello \u4e16\u754c",
+      "sign_rgb": 255,
+      "sign_glowing": true,
+      "banner_layers": "base:11546150,cross:16383998,border:3949738,circle:16701501",
+      "chest": {
+        "open": 1.0,
+        "closed": 0.0,
+        "slots": 63,
+        "real_item_transfer": true
+      },
+      "shulker": {
+        "open": 1.0,
+        "closed": 0.0,
+        "slots": 63,
+        "real_item_transfer": true
+      }
+    },
+    "block-animation-test": {
+      "ender_chest": {
+        "open_close": true,
+        "slots": 63
+      },
+      "double_chest": {
+        "open_close": true,
+        "slots": 90
+      },
+      "bell_ring_settles": true,
+      "dragon_redstone_state": true,
+      "conduit": {
+        "active": true,
+        "hunting": true,
+        "frame": 42
+      },
+      "removed_entity_disappears": true
+    },
+    "terrain-import-race-test": {
+      "placement_preserved": true,
+      "original_imported_once": true,
+      "mined_air_preserved": true,
+      "original_id_immutable": true,
+      "same_batch_race_preserved": true
+    },
+    "sustained-bomber-test": {
+      "drops": [
+        [
+          1233,
+          22.48072894779034,
+          119.01999998092651,
+          8.505350378574803
+        ],
+        [
+          1243,
+          23.482220417121425,
+          119.01999998092651,
+          8.490841046441346
+        ],
+        [
+          1253,
+          25.028536149533466,
+          119.01999998092651,
+          8.492489263648167
+        ],
+        [
+          1263,
+          25.509784430731088,
+          119.01999998092651,
+          8.482556808972731
+        ],
+        [
+          1273,
+          26.48165869875811,
+          119.01999998092651,
+          8.507974751992151
+        ],
+        [
+          1283,
+          27.48030031309463,
+          119.01999998092651,
+          8.496547125978395
+        ],
+        [
+          1293,
+          28.498684985097498,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          1305,
+          29.48680298263207,
+          118.90079998092651,
+          8.509999990463257
+        ],
+        [
+          1314,
+          31.55773365520872,
+          118.97999998092651,
+          8.487986205145717
+        ],
+        [
+          1324,
+          31.464323348831385,
+          118.97999998092651,
+          8.482814641436562
+        ],
+        [
+          1334,
+          33.55661785718985,
+          118.97999998092651,
+          8.509999990463257
+        ],
+        [
+          1344,
+          33.49811113066971,
+          118.97999998092651,
+          8.460445073898882
+        ],
+        [
+          1353,
+          34.48140336549841,
+          119.01999998092651,
+          8.507359699811786
+        ],
+        [
+          1363,
+          36.02410311345011,
+          119.01999998092651,
+          8.48581894976087
+        ],
+        [
+          1373,
+          36.497959884116426,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          1383,
+          37.48082573967986,
+          119.01999998092651,
+          8.494312492199242
+        ],
+        [
+          1393,
+          38.493559492053464,
+          119.01999998092651,
+          8.481065379455686
+        ],
+        [
+          1403,
+          40.02237433032133,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          1413,
+          40.48004757123999,
+          119.01999998092651,
+          8.501378619112074
+        ],
+        [
+          1423,
+          41.50303768296726,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          1433,
+          42.48124333843589,
+          119.01999998092651,
+          8.506941732484847
+        ],
+        [
+          1443,
+          43.487536484375596,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          1453,
+          44.48169244709425,
+          119.01999998092651,
+          8.491948074428365
+        ],
+        [
+          1463,
+          45.48050591396168,
+          119.01999998092651,
+          8.50446996721439
+        ],
+        [
+          1473,
+          46.494820018531755,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          1483,
+          47.48016623198055,
+          119.01999998092651,
+          8.502573255682364
+        ],
+        [
+          1493,
+          48.49627391481772,
+          119.01999998092651,
+          8.480350157944486
+        ],
+        [
+          1506,
+          49.464181198505685,
+          118.78318398092651,
+          8.431125359842554
+        ],
+        [
+          1513,
+          50.48292241571471,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          1523,
+          52.02487368648872,
+          119.01999998092651,
+          8.509999990463257
+        ],
+        [
+          1533,
+          52.48045864398591,
+          119.01999998092651,
+          8.495741431601346
+        ]
+      ],
+      "unique_tnt": 31,
+      "retained_tnt": true,
+      "engine_traveled": true,
+      "moving_piston_snapshots": true,
+      "destroyed_floor_cells": 257,
+      "materials_consumed": true
+    }
+  },
+  "assets_and_runtime_untracked": true,
+  "source_matches_upstream": true,
+  "clean_start": {
+    "clean_start": true,
+    "health": 20,
+    "air": 300,
+    "survival": true,
+    "starter_inventory": true,
+    "bomber_materials": true,
+    "cached_blocks": 0,
+    "entities": 0
+  },
+  "qa_archive": {
+    "verified": true,
+    "files": 124,
+    "source_bytes": 60309023,
+    "archive_bytes": 4649729,
+    "archive": "C:\\SahilAppProjects\\sm64ds-steve\\build\\steve\\qa-world-v092.zip"
+  },
+  "workspace_cap_bytes": 1073741824,
+  "workspace_bytes": 866578083
+}

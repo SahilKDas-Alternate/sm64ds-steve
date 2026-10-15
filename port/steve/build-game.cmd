@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0..\.."
 set "STEVE_VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 if not exist "%STEVE_VSWHERE%" exit /b 2
-rem The v0.9.1 baseline was verified here with the VS 2022 x86 compiler.
+rem The v0.9.2 release integration is built here with the VS 2022 x86 compiler.
 if not exist build\steve mkdir build\steve
 "%STEVE_VSWHERE%" -latest -version "[17.0,18.0)" -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath > build\steve\vs2022.txt
 set "STEVE_VS="

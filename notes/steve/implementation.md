@@ -1,6 +1,8 @@
-# Steve for the SM64DS v0.9.1 PC recomp
+# Steve for the SM64DS v0.9.2 PC recomp
 
-Base: `bf42a2418` (`Bump the shipped game exe version resources to 0.9.1`).
+Current upstream base: `66c188cfea5a2404634f8e4f584478294fd11a5f`
+(`release/game-0.9.2`). The original integration used v0.9.1 at `bf42a2418`;
+the sections below retain that implementation history.
 `main` remains at `b1f63064a`; `port` starts at the release commit. This project
 targets the Windows x86 PC recomp of the DS game, not a DS cartridge build.
 No claim of Nintendo DS hardware compatibility follows from this implementation.

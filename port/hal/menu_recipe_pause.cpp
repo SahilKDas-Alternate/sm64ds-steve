@@ -54,6 +54,8 @@ extern unsigned char data_0209f2c8;    /* the course the card shows */
 extern unsigned char data_0209f2b8;    /* the save status countdown */
 extern signed char data_0209f2f8;      /* the level the pause is in (PS_Init: castle = 0x1d) */
 extern unsigned char data_0209f250;    /* the local player's slot */
+extern unsigned char data_020a0de8[];  /* TouchInfo[slot * 4]: +0 touched, +1 change edge, +2 x, +3 y (hal/sub_screen.cpp poll_touch writes it) */
+extern unsigned char data_020a0e40;    /* the input slot the ROM reads */
 extern unsigned short data_0209f358[]; /* coins per player */
 extern signed char data_0209f30c[];    /* red coins per player */
 extern unsigned char data_0209cad2[];  /* SaveData coin records, per course (SaveData::GetCoinRecord) */
@@ -194,10 +196,15 @@ struct Slide {
 } g_slide = { 0, 0, 1 };
 const int kSlideTicks = 14;      /* about 0.23 s at the ROM's 60 ticks a second */
 
+/* ONE CURVE FOR EVERY SLIDE. ticks counts up toward the tracker (target 1) and down toward the planks (target 0), so the same ease-out read off
+   ticks would run backwards on the way back (slow start, then a hard stop: the "too fast" slide). Both ways ease out of the slide's own start:
+   toward the tracker the progress is ticks / kSlideTicks, toward the planks it is the ticks already walked back (kSlideTicks - ticks). Every
+   slide is kSlideTicks ticks long and lands on the same curve. */
 int slide_eased(void)
 {
-    const double p = (double)g_slide.ticks / kSlideTicks, q = 1.0 - p;
-    return (int)((1.0 - q * q * q) * 1000.0 + 0.5);
+    const double p = (double)(g_slide.target ? g_slide.ticks : kSlideTicks - g_slide.ticks) / kSlideTicks, q = 1.0 - p;
+    const int e = (int)((1.0 - q * q * q) * 1000.0 + 0.5);
+    return g_slide.target ? e : 1000 - e;
 }
 
 void slide_tick(int allowed)
@@ -218,7 +225,27 @@ void page_course(int dir)
     hal_menu_touch_queue_press(dir < 0 ? 0x1c : 0xe4, 0x10);
 }
 
+/* NO STALE STYLUS UNDER A CONFIRM KEY. The ROM's plate chain (PS_Update.cpp case 1 / 3 / 5: "touched, or a valid button") tests the stylus x / y
+   against every plate box BEFORE it looks at the chosen plate, and a valid button (Start, which the port's confirm keys become) with no touch
+   goes through the same tests. On the cartridge an untouched panel reads x = y = 0xff (src/func_0203b9bc.c: the idle quad {0xff, 0xff, 0, 0}
+   whenever no ring entry is touched), which falls outside every box, so the chosen plate wins. The port latches the LAST touched point on release
+   (hal/sub_screen.cpp poll_touch), so any earlier click left x / y inside some plate box (a click that landed where the ROM's Controller Modes
+   plate is, 0x40..0x5f in a course, is enough) and the next Enter / A / Space on "Exit Course" pressed that plate instead. While the pause is up
+   and nothing is touching, park the point where the cartridge does. */
+void park_idle_stylus(void)
+{
+    unsigned char *t = data_020a0de8 + (unsigned)data_020a0e40 * 4;
+    if (t[0] == 0) { t[2] = 0xff; t[3] = 0xff; }
+}
+
 int is_main_page(int v) { return v == V_CASTLE || v == V_COURSE; }
+/* A SLIDE IN FLIGHT EATS EVERY INPUT: from the press that starts it until it lands on the planks or the tracker, nothing is queued and nothing
+   is delivered late (bumpers, Q / E, the edge tabs, the planks' A / Enter / Space / Up / Down / Start / B and clicks). 4:3 main pages only. */
+int slide_busy(void)
+{
+    if (g_wide_now || !is_main_page(g_last_variant)) return 0;
+    return g_slide.target ? g_slide.ticks < kSlideTicks : g_slide.ticks > 0;
+}
 int tracker_view(void) { return !g_wide_now && is_main_page(g_last_variant) && g_slide.ticks > 0 && g_slide.target; }
 
 /* ---- the ROM's strings ------------------------------------------------------------------------------------------------ */
@@ -370,7 +397,7 @@ void publish_embed(const PauseFacts *f, int wide)
     e.on = on;
     e.wide = wide;
     e.dx = (!wide && on) ? pause_planks_dx(pause_geo(g_pic_w, g_pic_h, f, 3), f) : 0;
-    e.input = wide || f->slide_t1000 < 500;
+    e.input = wide || (f->slide_t1000 < 500 && !slide_busy());
     settings_page_set_embed(&e);
     g_embed_set = on;
 }
@@ -759,8 +786,15 @@ extern "C" int menu_pause_input(unsigned keys, int mvalid, int mx, int my, int m
         }
     }
     if (!mdown || !mvalid) g_tab_press = -1;
+    /* A CAROUSEL: each bumper, Q / E and edge tab always slides its own way (RB, E and the right tab: the page in view leaves to the right, the
+       other page comes in from the left; LB, Q and the left tab the mirror). From the planks page that is the planks leaving and the tracker
+       arriving; from the tracker page it is the tracker leaving the same way and the planks arriving from the other side, so a second RB keeps
+       going the way the first one went. The slide is one number (slide_t1000, 0 planks .. 1000 tracker) and dir is the side the PLANKS leave to, so
+       tracker -> planks with the tracker leaving to side act is the planks arriving from side -act: dir = -act, run back toward 0. A press while a
+       slide is still running is dropped (slide_busy), not remembered. */
+    if (act && slide_busy()) act = 0;
     if (act) {
-        if (g_slide.target) g_slide.target = 0;                        /* back the way it came */
+        if (g_slide.target) { g_slide.dir = -act; g_slide.target = 0; }
         else { g_slide.dir = act; g_slide.target = 1; }
     }
     return 1;
@@ -770,6 +804,8 @@ extern "C" int menu_pause_input(unsigned keys, int mvalid, int mx, int my, int m
    plate cursor: A (or B) slides back to the planks instead. pressed is the DS key word (MENU_PAD_*). */
 extern "C" void menu_pause_hook_pad(uint16_t *pressed, int back)
 {
+    if (g_last_variant) park_idle_stylus();
+    if (slide_busy()) { *pressed = 0; return; }       /* a slide in flight eats the pad */
     if (!tracker_view() || settings_page_open()) return;
     const uint16_t confirm = (uint16_t)(MENU_PAD_CONFIRM | MENU_PAD_START | 0x0001);
     if (*pressed & MENU_PAD_START) {       /* Start resumes at once (the ROM's Continue plate), the tracker view is left behind */
@@ -782,4 +818,35 @@ extern "C" void menu_pause_hook_pad(uint16_t *pressed, int back)
     *pressed = (uint16_t)(*pressed & ~(confirm | MENU_PAD_UP | MENU_PAD_DOWN));
 }
 
+/* OneScreenMenus OFF: no recipe is up, the ROM's own two-screen pause is on screen. The cartridge's pause has no pad cursor (PS_Update case 3: only a
+   touch inside a plate picks it; the pad's Start / Select presses whatever plate data_0209f2e0 already names, IsButtonInputValid's special path
+   src/IsButtonInputValid.c :39), so with the keyboard or a pad no key could ever reach Exit Course and A / Space did nothing at all. The same two things the
+   recipe's driver gives the new pause: Up / Down move the ROM's plate cursor (the ROM redraws it through UpdateMenuButtons, as a touch does), and
+   the port's confirm keys (pad A, Space, the DS A key) become the Start the ROM confirms with. pressed is the DS key word (MENU_PAD_*); the caller writes it back. */
+extern "C" void menu_pause_rom_pad(uint16_t *pressed)
+{
+    if (data_0209f248 != 5 && menu_pause_pad_ok()) park_idle_stylus();      /* (the VS pause stays the ROM's own) */
+    if (!pause_cursor_live() || !menu_pause_pad_ok()) return;
+    uint16_t k = *pressed;
+    const unsigned st = data_0209f248;
+    if (st == 5) return;            /* the VS pause stays the ROM's own */
+    int dir = -1;
+    if (k & MENU_PAD_UP) dir = MENU_DIR_UP;
+    else if (k & MENU_PAD_DOWN) dir = MENU_DIR_DOWN;
+    if (dir >= 0) {
+        const int last = data_0209f2b4 ? (int)data_0209f2b4 - 1 : 0;
+        const int cur = (int)data_0209f2e0;
+        const int ns = dir == MENU_DIR_UP ? (cur > 0 ? cur - 1 : cur) : (cur < last ? cur + 1 : cur);
+        if (ns != cur) {
+            set_chosen(ns);
+            func_02012790(0x12e);
+        }
+    }
+    if (k & (MENU_PAD_CONFIRM | 0x0001)) k = (uint16_t)((k & ~(unsigned)(MENU_PAD_CONFIRM | 0x0001)) | MENU_PAD_START);
+    k = (uint16_t)(k & ~(unsigned)(MENU_PAD_UP | MENU_PAD_DOWN));
+    *pressed = k;
+}
+
 extern "C" int menu_pause_active(void) { return g_last_variant != 0; }
+/* 1 while a 4:3 pause slide is in flight: the host stylus / click and the Backspace back key are eaten by their seam (hal/sub_screen.cpp) */
+extern "C" int menu_pause_slide_busy(void) { return slide_busy(); }

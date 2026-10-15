@@ -1,4 +1,4 @@
-# Steve in SM64DS v0.9.1
+# Steve in SM64DS v0.9.2
 
 Run the Windows PC port from the repository root:
 

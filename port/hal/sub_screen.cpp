@@ -128,7 +128,9 @@ int hal_present_client_to_fb(int cx, int cy, int *fx, int *fy);
 extern "C" int settings_page_hook_pad(uint16_t *pressed);
 extern "C" int settings_page_hook_touch(unsigned char down, unsigned char sx, unsigned char sy);
 extern "C" int settings_page_swallow_back(void);
-extern "C" void menu_pause_hook_pad(uint16_t *pressed, int back);   /* PAUSE3: hal/menu_recipe_pause.cpp */
+extern "C" void menu_pause_hook_pad(uint16_t *pressed, int back);
+extern "C" int menu_pause_slide_busy(void);    /* PAUSE43FIX2: a 4:3 pause slide in flight eats the click and the back key */
+extern "C" void menu_pause_rom_pad(uint16_t *pressed);   /* hal/menu_recipe_pause.cpp: OneScreenMenus off, the ROM's own pause */   /* PAUSE3: hal/menu_recipe_pause.cpp */
 int hal_present_client_to_sub(int cx, int cy, int *dsx, int *dsy);
 /* the layout mode, defined at the bottom of this file */
 int hal_sub_screen_stacked(void);
@@ -1627,6 +1629,11 @@ void menu_prepare_sources(unsigned *dst, int w, int h)
             g_msrc.pic_ry = ntr::present_y();
             g_msrc.pic_rw = ntr::present_w();
             g_msrc.pic_rh = ntr::present_h();
+            /* TITLE092: a frame whose 3D was drawn over the whole active frame (the title's scene, ntr::gx_set_menu_scene_cb) has the
+               whole frame as its picture: a piece that takes it whole (source 0,0,256,192, fixdest over the canvas) is a 1:1 copy */
+            if (ntr::gx_menu_scene_active()) {
+                g_msrc.pic_rx = 0; g_msrc.pic_ry = 0; g_msrc.pic_rw = w; g_msrc.pic_rh = h;
+            }
             if (hal_menu_uses_cover()) {
                 /* ASSET1: where the 3D engine wrote a pixel. gx_coverage is valid right after gx_render and nothing
                    rasterises between it and this draw. SCREEN_W stride, like the picture. */
@@ -2552,6 +2559,7 @@ void poll_touch(void)
     /* SETMENU1: the in-game settings page takes the stylus (the press on the title's wrench / the pause menu's Options plate that opens
        it, and every touch while it is up): the ROM sees no press. Single player only, as the pad half is. */
     if (!port::comms_transport() && settings_page_hook_touch(down, sx, sy)) down = 0;
+    if (down && menu_pause_slide_busy()) down = 0;     /* PAUSE43FIX2: a click while a 4:3 pause slide runs is eaten */
 
     /* ASSET6: a stylus / click / queued press going into the ROM gives the title attract its hidden save words back first */
     if (down) port_title_press_seen();
@@ -3731,9 +3739,20 @@ extern "C" void hal_menu_pad_seam(void)
         back = d && !back_was;
         back_was = d;
         if (back && settings_page_swallow_back()) back = 0;   /* SETPAGEFIX1: the Backspace that is the page's Back is not the ROM's */
+        if (back && menu_pause_slide_busy()) back = 0;        /* PAUSE43FIX2: dropped, not queued */
     }
     menu_bigmap_pad_seam();   /* MAP1: Select shows / hides the big map; the ROM never sees that Select (OneScreenMenus on) */
-    if (!hal_menu_live()) return;
+    if (!hal_menu_live()) {
+        /* OneScreenMenus off: the ROM's own pause on two screens; its plate cursor and confirm get the keys and the pad */
+        const int s0 = data_020a0e40;
+        unsigned short *pr = (unsigned short *)((char *)data_020a0e58 + s0 * 4 + 2);
+        unsigned short *sp = (unsigned short *)((char *)data_020a0e5a + s0 * 4);
+        uint16_t k0 = *pr, k1 = k0;
+        menu_pause_rom_pad(&k1);
+        settings_page_hook_pad(&k1);      /* MENUS093: with the one-screen menus off only the title's MP button guard applies (armed_target is off) */
+        if (k1 != k0) { *pr = k1; *sp = k1; }
+        return;
+    }
     /* ASSET3: MOUSE HOVER. A menu recipe's hotspots take the mouse focus when the pointer moves onto them (hal_menu_hover had no
        caller): the pointer in client pixels -> picture pixels, the same inverse the stylus uses. SM64DS_MENU_HOVER_AT=x,y@N (picture
        pixels, from the Nth live frame on) stands in for the pointer on a scripted run. Only a pointer that moved since the last frame counts, so a pointer left

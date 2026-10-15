@@ -6,3 +6,5 @@ extern "C" int settings_page_hook_pad(uint16_t *) { return 0; }
 extern "C" int settings_page_hook_touch(unsigned char, unsigned char, unsigned char) { return 0; }
 extern "C" int settings_page_swallow_back(void) { return 0; }
 extern "C" void menu_pause_hook_pad(uint16_t *, int) {}
+extern "C" void menu_pause_rom_pad(uint16_t *) {}
+extern "C" int menu_pause_slide_busy(void) { return 0; }
