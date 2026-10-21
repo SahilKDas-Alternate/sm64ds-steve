@@ -10,6 +10,11 @@ __declspec(selectany) bool (*player_render_hook)(void*)=nullptr;
 __declspec(selectany) void (*world_render_hook)()=nullptr;
 __declspec(selectany) bool (*removed_hook)(float,float,float)=nullptr;
 __declspec(selectany) bool (*health_hook)(int,int)=nullptr;
+__declspec(selectany) void (*collision_prepare_hook)()=nullptr;
+__declspec(selectany) int (*sphere_support_hook)(void*,int)=nullptr;
+__declspec(selectany) void **compiled_extending_table=nullptr,**host_extending_table=nullptr;
+inline void native_prepare_collision() {if(collision_prepare_hook)collision_prepare_hook();}
+inline int native_support_sphere(void* p,int result) {return sphere_support_hook?sphere_support_hook(p,result):result;}
 inline bool native_enabled() {return enabled_hook && enabled_hook();}
 inline void native_frame() {if(frame_hook) frame_hook();}
 inline void native_before_player(void* p) {if(before_hook) before_hook(p);}

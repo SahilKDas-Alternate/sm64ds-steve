@@ -7,6 +7,21 @@
 #include "geometry.h"
 #include "Player.h"
 #include "dBgCh_Gnd.h"
+#include "dBgCh_Lin.h"
+#include "Bowser.h"
+#include "daBombking_c.h"
+#include "Whomp.h"
+#include "BigBully.h"
+#include "daIDonketu_c.h"
+#include "Goomboss.h"
+#include "ChiefChilly.h"
+#include "Eyerok.h"
+#include "Wiggler.h"
+#include "daKrb_c.h"
+#include "Koopa.h"
+#include "daTrs_c.h"
+#include "daTrsIcon_c.h"
+#include "Key.h"
 #include "math/Matrix.h"
 #include "../hal/player_fields.h"
 #include "ntr/gx.h"
@@ -24,18 +39,24 @@
 extern "C" {
 extern void* data_0209f394[];
 extern unsigned char data_0209f250;
+extern unsigned char data_0209f2c4;
 extern signed char data_0209f2f8,data_02092120;
 extern int data_0209fc48;
+extern int data_0209caa0[];
+int IsStarCollectedInCurLevel(int);
+int _ZN5Event6GetBitEj(unsigned);
 extern int data_0209f32c[];
 extern short data_02092144[];
 extern Player::State data_ov002_021104b4,data_ov002_02110154;
 extern Matrix4x3 data_0209b3ec;
 int port_level_id(void);
 int port_course_coins(void);
+void port_clsn_prepare_dispatch(void);
 void KillPlayer(void);
 void GiveHealth(int,int);
 int func_ov002_020ceb54(void*);
 }
+#include "native_collision.inl"
 namespace steve {
 namespace {
 constexpr float scale=100.f,fix=4096.f,pi=3.14159265358979323846f;
@@ -45,6 +66,11 @@ Client client;
 Assets assets;
 bool loaded{},failed{},inventoryOpen{},catalogOpen{},mobOpen{},respawnPending{},capFlight{},menuClosing{};
 unsigned frames{},catalogPage{};
+bool submerged{};
+struct AirBubble {Vec at;unsigned age;};
+std::vector<AirBubble> airBubbles;
+bool airRefillPending{};
+uint64_t airRefillTick{};
 int scene=-1,lastCoins{},previousHP=-1;
 int terrainQuota{};
 uint64_t previousTick{};
@@ -159,6 +185,26 @@ void blockDraw(const float camera[16],unsigned id,Vec base,float size=scale) {
     auto* mesh=assets.block(id);if(!mesh) return;
     for(const auto& face:mesh->faces) quad(camera,face.vertex,assets.texture(face.texture),base,size,tint(*mesh,face),mesh->name=="water"?22:31);
 }
+void coinAir(Vec at,int coins) {
+    client.send("air");
+    airRefillPending=true;airRefillTick=client.state.tick;
+    for(int i=0;i<std::min(coins*6,24);i++) {
+        if(airBubbles.size()>=32)airBubbles.erase(airBubbles.begin());
+        airBubbles.push_back({{at.x+float((i%5-2)*12),at.y+50+float(i%3*18),at.z+float((i%4-2)*12)},0});
+    }
+    std::fprintf(stderr,"[steve-air] underwater coins=%d refill=300 bubbles=%u before=%d\n",coins,unsigned(airBubbles.size()),client.state.air);
+}
+void drawAirBubbles(const float camera[16]) {
+    static Texture bubble;
+    if(bubble.pixels.empty()) {
+        const Texture* icons=assets.texture("gui/icons");if(!icons || icons->w<25 || icons->h<27)return;
+        bubble.w=bubble.h=bubble.frameHeight=9;bubble.pixels.resize(81);
+        for(unsigned y=0;y<9;y++)for(unsigned x=0;x<9;x++)bubble.pixels[y*9+x]=icons->pixels[(y+18)*icons->w+x+16];
+    }
+    MeshVertex face[4]={{-.5f,0,0,0,16},{.5f,0,0,16,16},{.5f,1,0,16,0},{-.5f,1,0,0,0}};
+    float yaw=std::atan2(camera[8],camera[0]);
+    for(const auto& b:airBubbles)quad(camera,face,&bubble,b.at,14,0xffffffffu,24,yaw);
+}
 #include "block_entities.inl"
 void rebuild(Cell key) {
     std::vector<Draw> draws;
@@ -182,19 +228,22 @@ void mark(Cell at) {
     for(int side=0;side<6;side++) dirtyChunks.insert(section(neighbor(at,side)));
 }
 bool ground(Vec p,void* owner,float& height) {
+    port_clsn_prepare_dispatch();
     dBgCh_Gnd ray;
     Vector3 point{int(p.x*fix),int(p.y*fix),int(p.z*fix)};
-    ray.SetObjAndPos(point,static_cast<dActor_c*>(owner));ray.mProbeHeight=0;
+    ray.SetObjAndPos(point,static_cast<dActor_c*>(owner));ray.mProbeHeight=65536*4096;
     if(!ray.DetectClsn() || !ray.hasClsn) return false;
     height=static_cast<int>(ray.clsnY)/fix;return true;
 }
 bool waterSurface(Vec p,void* owner,float& height) {
+    port_clsn_prepare_dispatch();
     dBgCh_Gnd ray;ray.StartDetectingWater();ray.StopDetectingOrdinary();
     Vector3 point{int(p.x*fix),std::max(int(p.y*fix),data_0209f32c[0]+200*4096),int(p.z*fix)};
-    ray.SetObjAndPos(point,static_cast<dActor_c*>(owner));ray.mProbeHeight=0;
+    ray.SetObjAndPos(point,static_cast<dActor_c*>(owner));ray.mProbeHeight=65536*4096;
     if(!ray.DetectClsn() || !ray.hasClsn) return false;
     height=static_cast<int>(ray.clsnY)/fix;return true;
 }
+#include "boss_combat.inl"
 void mirror(Cell at,const char* material) {
     if(terrainQuota<=0 || terrain.size()>=65536 || terrain.count(at) || holes.count(at) || client.blocks.count(at)) return;
     if(client.send("terrain\t"+coordinates(at)+"\t"+material)) {--terrainQuota;terrain.insert(at);mark(at);}
@@ -232,8 +281,9 @@ void aim(void* p) {
         float distance=relative.x*direction.x+relative.y*direction.y+relative.z*direction.z;
         if(distance<0 || distance>targetDistance) continue;
         float dx=relative.x-direction.x*distance,dy=relative.y-direction.y*distance,dz=relative.z-direction.z*distance;
-        if(dx*dx+dy*dy+dz*dz<3600) {targetEntity=e.id;targetDistance=distance;}
+        if(dx*dx+dy*dy+dz*dz<3600) {targetEntity=e.id;targetDistance=distance;hasTarget=true;}
     }
+    aimBoss();
 }
 void uiQuad(float x,float y,float w,float h,const Texture* t,float u0=0,float v0=0,float u1=-1,float v1=-1,uint32_t color=0xffffffffu) {
     static uint32_t white=0xffffffffu;
@@ -315,7 +365,7 @@ void hud() {
         uiQuad(bx+(172-i*8)*s,by-12*s,9*s,9*s,icons,16,27,25,36);
         if(client.state.food>i*2) uiQuad(bx+(172-i*8)*s,by-12*s,9*s,9*s,icons,client.state.food>=i*2+2?52.f:61.f,27,client.state.food>=i*2+2?61.f:70.f,36);
     }
-    if(client.state.air<300) for(int i=0;i<std::max(0,(client.state.air+29)/30);i++) uiQuad(bx+(172-i*8)*s,by-24*s,9*s,9*s,icons,16,18,25,27);
+    if(submerged || client.state.air<300) for(int i=0;i<std::max(0,(client.state.air+29)/30);i++) uiQuad(bx+(172-i*8)*s,by-24*s,9*s,9*s,icons,16,18,25,27);
     uiQuad(x+w/2-8*s,y+h/2-8*s,16*s,16*s,icons,0,0,16,16);
     if(client.state.mining>=0) {uiQuad(x+w/2-30*s,y+h/2+14*s,60*s,3*s,nullptr,0,0,1,1,0xff202020u);uiQuad(x+w/2-30*s,y+h/2+14*s,(client.state.mining+1)*6*s,3*s,nullptr,0,0,1,1,0xffc8c8c8u);}
     if(inventoryOpen) {
@@ -484,7 +534,8 @@ void clicks() {
         client.send("machine\t"+coordinates(at)+"\t"+std::to_string(down(VK_SHIFT)));
     }
     if(down(VK_LBUTTON) && hasTarget) {
-        if(targetEntity>=0 && left) client.send("attack\t"+std::to_string(targetEntity));
+        if(targetBoss) {if(miningHeld){client.send("cancel");miningHeld=false;}if(left) punchBoss(targetBoss);}
+        else if(targetEntity>=0 && left) client.send("attack\t"+std::to_string(targetEntity));
         else if(targetEntity<0) {miningHeld=true;if(nativeTarget) mirror(target,"stone");client.send("mine\t"+coordinates(target));}
     } else if(!down(VK_LBUTTON) && miningHeld) {client.send("cancel");miningHeld=false;}
     if(right) {
@@ -505,12 +556,16 @@ void clicks() {
 bool enabled_impl() {static int enabled=-1;if(enabled<0) enabled=std::getenv("SM64DS_STEVE")?1:0;return enabled!=0;}
 void frame_impl() {
     if(!native_enabled() || failed) return;
+    bossFrame();
     if(root.empty()) {const char* path=std::getenv("SM64DS_ASSET_ROOT");root=path?path:".";}
     if(!loaded) {loaded=assets.load(root+"/runtime/steve-assets");if(!loaded) {failed=true;return;}}
     client.poll(root);if(!client.fresh()) return;
+    if(airRefillPending && client.state.tick>airRefillTick && client.state.air>=295) {
+        airRefillPending=false;std::fprintf(stderr,"[steve-air] acknowledged air=%d tick=%llu\n",client.state.air,static_cast<unsigned long long>(client.state.tick));
+    }
     void* p=local();if(!p) return;
     int token=currentScene();
-    if(token!=scene) {scene=token;chunkMeshes.clear();dirtyChunks.clear();terrain.clear();holes.clear();terrainSurfaces.clear();terrainQueue.clear();terrainTriangles.clear();client.blocks.clear();client.terrainOriginal.clear();client.edits.clear();previousHP=-1;consumedPush={};client.send("sync");}
+    if(token!=scene) {scene=token;chunkMeshes.clear();dirtyChunks.clear();terrain.clear();holes.clear();terrainSurfaces.clear();terrainQueue.clear();terrainTriangles.clear();client.blocks.clear();client.terrainOriginal.clear();client.edits.clear();airBubbles.clear();lastCoins=port_course_coins();previousHP=-1;consumedPush={};client.send("sync");}
     auto* player=static_cast<Player*>(p);
     // Steve has no Nintendo entrance animation. Complete that one state through
     // its real cleanup/init path once the cutscene has released the avatar.
@@ -531,6 +586,9 @@ void frame_impl() {
     auto* bm=assets.block(block(cell({at.x,at.y+((client.state.flags&18)?40.f:162.f),at.z})));underwater=bm&&bm->name=="water";
     // Native swimming is a state, so its oxygen needs the same Minecraft clock.
     underwater=underwater || (player->mIsUnderwater && func_ov002_020ceb54(player));
+    submerged=underwater;
+    if(!noControl)for(auto& b:airBubbles){++b.age;b.at.y+=1.5f;}
+    airBubbles.erase(std::remove_if(airBubbles.begin(),airBubbles.end(),[](const AirBubble& b){return b.age>=60;}),airBubbles.end());
     std::ostringstream pose;pose<<"pose\t"<<scene<<'\t'<<at.x/scale<<'\t'<<at.y/scale<<'\t'<<at.z/scale<<'\t'<<yaw<<'\t'<<pitch<<'\t'<<underwater<<'\t'<<noControl<<'\t'<<damage<<'\t'<<!player->mIsAirborne;
     client.send(pose.str());
     if(!noControl) {
@@ -538,7 +596,7 @@ void frame_impl() {
         if(capFlight && !player->mHasWings && (client.state.flags&2)) client.send("wing\t0");
         capFlight=player->mHasWings!=0;
     }
-    int coins=port_course_coins();if(coins>lastCoins && underwater) client.send("air");lastCoins=coins;
+    int coins=port_course_coins();if(coins>lastCoins && underwater) coinAir(at,coins-lastCoins);lastCoins=coins;
     if(client.state.token!=scene) return;
     terrainQuota=12;
     float standing;
@@ -648,6 +706,11 @@ void frame_impl() {
         }
         player->mPosY=int((c.y+1.5f)*scale*fix);player->mIsAirborne=1;
     }
+    if(std::getenv("SM64DS_STEVE_TEST_SWIM_COIN") && frames==140) {
+        Vector3 at{player->mPosX,player->mPosY,player->mPosZ};
+        auto* coin=dActor_c::Spawn(288,0,at,nullptr,player->mAreaId,-1);
+        std::fprintf(stderr,"[steve-air-test] native coin=%u air=%d underwater=%d\n",coin?coin->uniqueID:0,client.state.air,underwater);
+    }
     if(std::getenv("SM64DS_STEVE_TEST_BOAT")) {
         if(frames==60) client.send("spawn\tboat\t"+std::to_string(at.x/scale)+"\t"+std::to_string(at.y/scale+5)+"\t"+std::to_string(at.z/scale));
         if(frames>60 && !(client.state.flags&4)) for(const auto& e:client.state.entities) if(assets.entity(e.type)=="boat") {client.send("ride\t"+std::to_string(e.id));break;}
@@ -685,6 +748,7 @@ void frame_impl() {
     if(std::getenv("SM64DS_STEVE_TEST_HOLE") && frames%60==0) std::fprintf(stderr,"[steve-hole] holes=%zu pos=(%.2f,%.2f,%.2f)\n",holes.size(),at.x,at.y,at.z);
 }
 void before_impl(void* p) {
+    if(native_enabled())port_clsn_prepare_dispatch();
     if(!p) p=local();
     if(beforePhysicsFrame==frames) return;
     if(native_enabled() && p && p==local()) {
@@ -716,6 +780,12 @@ void after_impl(void* p) {
     Vec push{client.state.pushedX,client.state.pushedY,client.state.pushedZ};
     if(!(client.state.flags&22)) {now.x+=(push.x-consumedPush.x)*scale;now.y+=(push.y-consumedPush.y)*scale;now.z+=(push.z-consumedPush.z)*scale;}
     consumedPush=push;
+    if(!(client.state.flags&22) && now.y<previousPosition.y) {
+        float floor;
+        if(ground({now.x,previousPosition.y+8,now.z},p,floor) && !native_removed(now.x,floor,now.z) && previousPosition.y>=floor-4 && now.y<floor) {
+            now.y=floor;player->mVertSpeed=0;player->mGroundY=int(floor*fix);player->mIsAirborne=0;player->mMeshClsn.SetGroundFlag();
+        }
+    }
     auto voxelSupport=[&]() {
         Cell low=cell({now.x-25,now.y-151,now.z-25}),high=cell({now.x+25,now.y-.01f,now.z+25});
         for(int y=low.y;y<=high.y;y++) for(int z=low.z;z<=high.z;z++) for(int x=low.x;x<=high.x;x++) {
@@ -770,6 +840,7 @@ bool render_player_impl(void* p) {
     float movement=std::hypot(at.x-previousPosition.x,at.z-previousPosition.z);
     float swing=movement>0.5f?std::sin(float(frames)*.5f)*.65f:0;
     if(miningHeld) swing=std::sin(float(frames))*.9f;
+    if(punchAnimation) swing=std::sin((10-punchAnimation)*pi/10.f)*1.4f;
     float tilt=client.state.flags&18?-pi/2:0;
     humanoid(camera,at,yaw,tilt?0:swing,assets.texture("entity/steve"),false,false,tilt,(client.state.flags&4)!=0);
     if(client.state.flags&2 || player->mHasWings) {
@@ -816,6 +887,7 @@ void render_world_impl() {
         if(model) for(const auto& face:model->faces) quad(camera,face.vertex,cracks,{target.x*scale-.25f,target.y*scale-.25f,target.z*scale-.25f},scale+.5f);
     }
     entities(camera);
+    drawAirBubbles(camera);
     hud();
 }
     bool removed_impl(float x,float y,float z) {return native_enabled() && client.fresh() && holes.count(cell({x,y,z}))!=0;}
@@ -824,6 +896,7 @@ namespace {
 struct Register {
     Register() {
         ntr::gx_host_triangle_filter=cutStage;
+        collision_prepare_hook=port_clsn_prepare_dispatch;sphere_support_hook=port_steve_sphere_support;
         enabled_hook=enabled_impl;frame_hook=frame_impl;before_hook=before_impl;after_hook=after_impl;
         player_render_hook=render_player_impl;world_render_hook=render_world_impl;removed_hook=removed_impl;
           health_hook=health_impl;

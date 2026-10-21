@@ -245,7 +245,15 @@ public final class Backend {
             yaw=(float)number(p,7); pitch=(float)number(p,8);
             underwater=integer(p,9)!=0; paused=integer(p,10)!=0;
             float damage=(float)number(p,11); boolean grounded=integer(p,12)!=0;
-            if(!(Boolean)r.call(player,"isPassenger") && !(Boolean)r.call(player,"isFallFlying") && !swimming) r.call(player,"setPos",x,y,z); r.call(player,"setYRot",yaw); r.call(player,"setXRot",pitch);
+            if(!(Boolean)r.call(player,"isPassenger") && !(Boolean)r.call(player,"isFallFlying") && !swimming) {
+                double dx=x-value(player,"getX"),dy=y-value(player,"getY"),dz=z-value(player,"getZ");
+                // Nintendo entrances, warps and course transitions are teleports,
+                // not Minecraft falls. Nintendo also owns grounded fall damage.
+                if(dx*dx+dy*dy+dz*dz>64) {r.set(player,"fallDistance",0f);r.call(player,"setDeltaMovement",r.constant("net.minecraft.world.phys.Vec3","ZERO"));}
+                if(grounded) r.set(player,"fallDistance",0f);
+                r.call(player,"setPos",x,y,z);
+            }
+            r.call(player,"setYRot",yaw); r.call(player,"setXRot",pitch);
             r.set(player,"onGround",grounded && !(Boolean)r.call(player,"isFallFlying"));
             r.call(r.call(world,"getChunkSource"),"move",player);
             if(damage>0 && damage<=20) r.call(player,"hurt",r.constant("net.minecraft.world.damagesource.DamageSource","GENERIC"),damage);
@@ -361,6 +369,9 @@ public final class Backend {
             if(value(player,"getHealth")>0) break;
             player=r.call(r.call(server,"getPlayerList"),"respawn",player,false);
             inventory=r.call(player,"getInventory");menu=null;controlledVehicle=null;
+            swimming=false;swimSide=swimUp=swimForward=0;
+            r.call(player,"setSwimming",false);r.call(player,"setPose",r.constant("net.minecraft.world.entity.Pose","STANDING"));
+            r.call(player,"setDeltaMovement",r.constant("net.minecraft.world.phys.Vec3","ZERO"));r.set(player,"fallDistance",0f);
             r.call(player,"setNoGravity",true);r.call(player,"setPos",number(p,3)+arenaX,number(p,4),number(p,5)+arenaZ);
             oxygen=300;drowningClock=0;break;
         }

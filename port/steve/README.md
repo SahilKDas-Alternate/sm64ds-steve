@@ -20,7 +20,7 @@ Minecraft 1.18 asset repository. Generated packs and the server stay untracked.
 | Input | Action |
 |---|---|
 | WASD / existing game controls | Nintendo movement; steer boats or swim |
-| Hold left mouse | Mine blocks; attack the targeted mob |
+| Left mouse | Mine blocks; punch a targeted native boss, Goomba, Koopa or Minecraft mob |
 | Right mouse | Place/use the held item, open a workbench, interact with a mob or enter a boat |
 | Release right mouse | Release a charged bow or stop using an item |
 | 1–9 | Select a hotbar slot |
@@ -86,6 +86,36 @@ NBT text with dye/glow, Unicode BMP glyphs, component colors and text formatting
 Banners composite their ordered NBT pattern layers using official dye colors.
 Container menus use vanilla slot coordinates and support real item transfers.
 Mob rigs remain simpler than Minecraft's client renderer.
+
+Steve's punches also reach native Nintendo actors. Bosses receive a visible
+launch, continue falling outside the camera, stop at walls and placed collision
+shapes, and recover if they land back on their platform. Falling 600 units below
+their last supported position, or landing more than 160 units below it, counts
+as leaving the arena; the reward appears at that last supported position.
+Bowser retains his two castle keys and final Grand Star; King Bob-omb, Whomp King,
+Big/Chill Bully, Eyerok and Wiggler use their tracked stars. Goomboss, Chief Chilly
+and the Luigi boss retain their character keys. Course Big Boos resolve their
+star through their icon owner. Goomba and Koopa variants use Nintendo's normal
+launch/death, coin and death-table code. Enclosed arenas still require an exit
+or a mined opening for a fall; a punch does not delete a wall.
+
+Verified native reward pickups: final Bowser, King Bob-omb, Whomp King,
+Big Bully, Chill Bully, Goomboss, Chief Chilly and Wiggler. Goomba and Koopa
+defeats also passed. King Boo and Eyerok remain unverified: their introductory
+states did not reach an attackable boss in the automated arena tests. Their
+reward adapters are present, but do not treat them as completed gameplay.
+
+Underwater coins refill oxygen through IPC and release visible bubbles. The full
+air meter stays visible underwater. Nintendo swimming retains its native controls;
+Minecraft water uses W/A/S/D, Space to rise and Control to dive.
+
+With the local server running, `port/steve/test-combat.ps1 -Level 40 -Actor 279`
+tests a real arena with scripted positioning and aim, waits for native reward
+collection, rejects actor faults, and writes evidence under `build/steve/`.
+Use `-Level 6 -Actor 189` for King Bob-omb, or `-Level 6 -Actor 200 -Enemy`
+for Goombas. These are automated fixtures, not a recording of manual play, and
+use disposable Nintendo save files. They change their separate Minecraft QA
+arenas; preserve the runtime world before running a test suite.
 The adapter bounds cached cells to 65,536, active forced chunks to 128 and
 synchronized entities to 128. It uses the overworld as the arena backend.
 Visual snapshots cover up to 512 nearby block entities within 64 blocks, with
@@ -112,6 +142,7 @@ level isolation and death/respawn. They use the actual 1.18 server.
 ./port/steve/test-native.ps1 -Health -Scene 920
 ./port/steve/test-native.ps1 -Flight -Scene 923
 ./port/steve/test-native.ps1 -Swim -Scene 924
+./port/steve/test-native.ps1 -SwimCoin -Scene 1018
 ./port/steve/test-native.ps1 -Hole -Scene 925
 ./port/steve/test-native.ps1 -Shape slab -Scene 926
 ./port/steve/test-native.ps1 -Shape fence -Scene 927

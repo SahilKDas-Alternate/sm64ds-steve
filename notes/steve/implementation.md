@@ -237,3 +237,19 @@ regression checks both sequential requests and a placement/import pair queued
 within one tick. In-game conduit verification exposed this case in its frame.
 The shutdown CLI keeps IPC alive until stop is consumed; the launcher waits for
 an owned Java process to release the world before starting another instance.
+
+Native combat and underwater coin verification is recorded in
+`combat-verification.json`. Boss punches suspend reset/teleport AI while applying
+gravity and KCL/official block collision, then use native reward bookkeeping.
+Goombas and Koopas use the normal enemy death path. Moving collider dispatch now
+preserves surface queries, and swept downward sphere contacts support rewards.
+Underwater native coins send an air refill over IPC and spawn bounded rising
+bubbles; `test-native.ps1 -SwimCoin` asserts depletion, pickup and a later server
+acknowledgment. Respawn clears swimming input, pose and fall velocity.
+
+The Bowser MP4 is automated gameplay verification, not manual play. King Boo and
+Eyerok still fail activation/collection verification; their adapters must not be
+described as finished. The first two Bowser key variants also need separate
+in-game proof. No recovered `src/` or `include/` files changed. QA worlds are
+CRC-checked ZIP archives; the preserved pre-combat world/player data is restored
+after testing. Raw capture frames are removed only after MP4 decode verification.

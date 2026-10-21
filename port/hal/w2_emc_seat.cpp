@@ -62,16 +62,10 @@
 //   host [9]   BeforeClsn, with its OWN park-and-restore shim
 //   host [10]  GetAngularVelY  [11] GetVelocity  [12] GetVelocity again
 //
-// WHY [1] AND [2] BOTH TAKE Virtual08. The MMC table gets away with leaving [1]
-// alone because it is a COPY of MeshCollider's seeded table and slot 1 already
-// held MeshCollider::Virtual08 (hal/clsn_vtable.cpp's slot_v08). This array is
-// FRESH AND ZEROED -- nothing seeds it -- so every slot has to be written or it
-// is a call through null, not a base-class body. [1] is the MSVC index for
-// Virtual08 and [2] is the ROM shadow's; the class's own Virtual08 is the right
-// answer at both. What [2] costs is MSVC's GetSurfaceInfo index, and that is
-// free here: the ROM's slot 3 is the ITCM body 0x01ffd920 and the port hosts no
-// TU for it, so the index was never going to hold anything anyway -- the same
-// trade hal/mmc_vtable.cpp makes.
+// Surface calls use MSVC indices: [1] is Virtual08 and [2] is the inherited
+// GetSurfaceInfo. Earlier versions parked Virtual08 at both indices while the
+// ITCM surface body was absent. That body is linked now and the real KCL walks
+// call it, so [2] must supply surface information, including on scaled platforms.
 //
 // ---- THE CARRY-SLOT TRAP, and why this file gets its OWN shim -------------
 //
@@ -103,6 +97,7 @@
 #include "dsstate_seg.h"
 
 #include "dBgW_KcMbgSclY.h"
+#include "../steve/native.h"
 
 extern "C" {
 /* THE STORAGE. include/decl_common.h:2971 declares this extern and no object
@@ -152,6 +147,11 @@ static void __fastcall emc_dtor(void *s, void *)
 { _ZN14dBgW_KcMbgSclYD0Ev(s); }
 static void __fastcall emc_v08(void *s, void *)
 { _ZN14dBgW_KcMbgSclY9Virtual08Ev(s); }
+extern "C" {
+extern void *port_cpp_extending_vtable[];
+}
+static void __fastcall emc_surface(void *s,void *,s16 tri,SurfaceInfo *res)
+{ ((dBgW_Kc*)s)->dBgW_Kc::GetSurfaceInfo(tri,*res); }
 static void __fastcall emc_norm(void *s, void *, s16 tri, Vector3 *res)
 { _ZN14dBgW_KcMbgSclY9GetNormalEsR7Vector3(s, tri, res); }
 static void __fastcall emc_orig(void *s, void *, s16 tri, Vector3 *res)
@@ -197,7 +197,7 @@ extern "C" void hal_seat_extending_mesh_collider_vtable(void)
     void **vt = _ZTV14dBgW_KcMbgSclY;
     vt[0]  = (void *)emc_dtor;
     vt[1]  = (void *)emc_v08;      /* MSVC index for Virtual08 */
-    vt[2]  = (void *)emc_v08;      /* ROM index for Virtual08 */
+    vt[2]  = (void *)emc_surface;  /* MSVC GetSurfaceInfo, used by the KCL walks */
     vt[3]  = (void *)emc_norm;     /* ROM slot 4, MSVC index 3 */
     vt[4]  = (void *)emc_orig;     /* ROM slot 5, MSVC index 4 */
     vt[5]  = (void *)emc_orig;     /* ...and again at the ROM index */
@@ -208,7 +208,10 @@ extern "C" void hal_seat_extending_mesh_collider_vtable(void)
     vt[10] = (void *)emc_angvel;
     vt[11] = (void *)emc_vel;
     vt[12] = (void *)emc_vel;
+    steve::compiled_extending_table=port_cpp_extending_vtable;steve::host_extending_table=vt;
 }
+
+#pragma comment(linker,"/alternatename:_port_cpp_extending_vtable=??_7dBgW_KcMbgSclY@@6B@")
 
 /* ---- method faces --------------------------------------------------------
    Virtual08 and GetNormal are the two EMC bodies src defines as real C++

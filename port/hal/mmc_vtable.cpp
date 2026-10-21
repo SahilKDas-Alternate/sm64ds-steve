@@ -124,7 +124,9 @@ extern "C" void hal_fill_moving_mesh_collider_vtable(void)
     /* Batch-3: slot 0 gets MovingMeshCollider's OWN deleting dtor, replacing
        the MeshCollider D0 the seed copy left there (the wrong class body). */
     _ZTV10dBgW_KcMbg[0] = (void *)mmc_dtor;
-    _ZTV10dBgW_KcMbg[2] = (void *)mmc_v08;
+    // Surface queries use MSVC's single-destructor layout, as the KCL walk
+    // does. Virtual08 is slot 1; slot 2 must retain GetSurfaceInfo.
+    _ZTV10dBgW_KcMbg[1] = (void *)mmc_v08;
     _ZTV10dBgW_KcMbg[3] = (void *)mmc_norm;
     _ZTV10dBgW_KcMbg[4] = (void *)mmc_orig;
     _ZTV10dBgW_KcMbg[5] = (void *)mmc_orig;

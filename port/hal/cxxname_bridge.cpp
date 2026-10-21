@@ -308,9 +308,12 @@ extern "C" void hal_m43_roty(void *m, int a);
 void Matrix4x3_FromRotationY(void *m, int a) { hal_m43_roty(m, a); }
 
 #include "dBgW.h"
+#include "../steve/native.h"
 extern "C" int _ZN4dBgW6EnableEP8dActor_c(void *self, void *actor)
 {
-    return ((dBgW *)self)->dBgW::Enable((dActor_c *)actor);
+    int result=((dBgW *)self)->dBgW::Enable((dActor_c *)actor);
+    steve::native_prepare_collision();
+    return result;
 }
 extern "C" {
 DSSTATE_BEGIN

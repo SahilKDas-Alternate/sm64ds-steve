@@ -1,0 +1,222 @@
+{
+  "release": "Tango v0.9.2",
+  "releaseCommit": "66c188cfea5a2404634f8e4f584478294fd11a5f",
+  "scope": "host port only; no recovered src/include changes",
+  "executableSha256": "c2387ae2dc832821432078a80136f9e4d110f3bf3b9f5fdd2d07c0b458f0ee2b",
+  "nativeCombat": [
+    {
+      "nativeEnemy": false,
+      "evidence": [
+        "[steve-boss] punch id=279 name=Bowser pos=(-5.0,300.0,-761.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] landed id=279 frames=35",
+        "[steve-boss] punch id=279 name=Bowser pos=(-5.0,300.0,1864.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=279 name=Bowser fall=611.3 reward=283 safe=(-5.0,300.3,1864.0)",
+        "[steve-boss-test] reward-collected actor=283 index=7 save=0 before=0 event1d=536870912"
+      ],
+      "actor": 279,
+      "level": 40,
+      "faults": 0,
+      "exitCode": 0,
+      "frames": 700
+    },
+    {
+      "level": 6,
+      "evidence": [
+        "[steve-boss] punch id=189 name=King Bob-omb pos=(1501.0,4192.0,-5387.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=189 name=King Bob-omb fall=611.8 reward=178 safe=(1501.0,4192.8,-5387.0)",
+        "[steve-boss-test] reward-collected actor=178 index=1 save=0 before=0 event1d=536870912"
+      ],
+      "actor": 189,
+      "faults": 0,
+      "frames": 400,
+      "exitCode": 0,
+      "nativeEnemy": false
+    },
+    {
+      "level": 7,
+      "evidence": [
+        "[steve-boss] punch id=165 name=Whomp King pos=(704.0,3500.0,705.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=165 name=Whomp King fall=611.0 reward=178 safe=(704.0,3500.0,705.0)",
+        "[steve-boss-test] reward-collected actor=178 index=1 save=0 before=0 event1d=536870912"
+      ],
+      "actor": 165,
+      "faults": 0,
+      "frames": 400,
+      "exitCode": 0,
+      "nativeEnemy": false
+    },
+    {
+      "nativeEnemy": false,
+      "level": 14,
+      "evidence": [
+        "[steve-boss] punch id=216 name=Big Bully pos=(0.0,300.0,-4245.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=216 name=Big Bully fall=300.0 reward=178 safe=(0.0,300.0,-4245.0)",
+        "[steve-boss] punch id=216 name=Big Bully pos=(3750.0,1000.0,-5500.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss-test] reward-collected actor=178 index=1 save=0 before=0 event1d=536870912"
+      ],
+      "faults": 0,
+      "actor": 216,
+      "exitCode": 0,
+      "frames": 450
+    },
+    {
+      "nativeEnemy": false,
+      "level": 19,
+      "evidence": [
+        "[steve-boss] punch id=217 name=Chill Bully pos=(202.2,1320.0,-4425.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=217 name=Chill Bully fall=611.0 reward=178 safe=(202.2,1320.0,-4425.0)",
+        "[steve-boss-test] reward-collected actor=178 index=2 save=0 before=0 event1d=536870912"
+      ],
+      "faults": 0,
+      "actor": 217,
+      "exitCode": 0,
+      "frames": 450
+    },
+    {
+      "level": 45,
+      "frames": 700,
+      "actor": 198,
+      "nativeEnemy": false,
+      "exitCode": 0,
+      "faults": 0,
+      "evidence": [
+        "[steve-boss] punch id=198 name=Goomboss pos=(516.5,300.0,1247.2) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=198 name=Goomboss fall=536.7 reward=282 safe=(516.5,300.0,1247.2)",
+        "[steve-boss-test] reward-collected actor=282 index=2 save=8 before=0 event1d=536870912"
+      ]
+    },
+    {
+      "level": 49,
+      "frames": 700,
+      "actor": 218,
+      "nativeEnemy": false,
+      "exitCode": 0,
+      "faults": 0,
+      "evidence": [
+        "[steve-boss] punch id=218 name=Chief Chilly pos=(-339.3,1002.0,274.4) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=218 name=Chief Chilly fall=609.1 reward=282 safe=(-339.3,1000.1,274.4)",
+        "[steve-boss-test] reward-collected actor=282 index=4 save=20 before=0 event1d=536870912"
+      ]
+    },
+    {
+      "evidence": [
+        "[steve-boss] punch id=248 name=Wiggler pos=(1653.7,2067.9,-702.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=248 name=Wiggler fall=668.1 reward=178 safe=(687.4,1800.0,316.7)",
+        "[steve-boss-test] reward-collected actor=178 index=6 save=0 before=0 event1d=536870912"
+      ],
+      "level": 26,
+      "actor": 248,
+      "exitCode": 0,
+      "nativeEnemy": false,
+      "faults": 0,
+      "frames": 450
+    },
+    {
+      "frames": 240,
+      "faults": 0,
+      "nativeEnemy": true,
+      "level": 6,
+      "actor": 200,
+      "exitCode": 0,
+      "evidence": [
+        "[steve-boss] native-enemy-hit id=200 death=8",
+        "[steve-boss-test] native-enemy-defeated id=200 uid=19",
+        "[steve-boss] native-enemy-hit id=200 death=8",
+        "[steve-boss-test] native-enemy-defeated id=200 uid=20",
+        "[steve-boss] native-enemy-hit id=200 death=8",
+        "[steve-boss-test] native-enemy-defeated id=200 uid=21",
+        "[steve-boss] native-enemy-hit id=200 death=8"
+      ]
+    },
+    {
+      "faults": 0,
+      "level": 6,
+      "evidence": [
+        "[steve-boss] native-enemy-hit id=203 death=8",
+        "[steve-boss-test] native-enemy-defeated id=203 uid=201"
+      ],
+      "frames": 260,
+      "exitCode": 0,
+      "actor": 203,
+      "nativeEnemy": true
+    }
+  ],
+  "swimming": {
+    "ascent_blocks": 4.286484202901676,
+    "descent_blocks": 4.56020583044274,
+    "distance_blocks": 3.9577779129316895,
+    "start": {
+      "x": 0.5,
+      "y": 66.0,
+      "z": 0.5199999995529652
+    },
+    "end": {
+      "version": "1",
+      "tick": "3246",
+      "ack": "17511",
+      "level": "21",
+      "x": "0.5",
+      "y": "64.0",
+      "z": "4.790226720474981",
+      "yaw": "0.0",
+      "pitch": "0.0",
+      "health": "20.0",
+      "air": "200.0",
+      "food": "17",
+      "flags": "16",
+      "mining": "-1",
+      "slot": "0"
+    }
+  },
+  "underwaterCoin": {
+    "bubbles": 6,
+    "nativeCoinPickup": true,
+    "faults": 0,
+    "frames": 180,
+    "nativeSwimming": true,
+    "airBefore": 133,
+    "scene": 1018,
+    "airAcknowledged": 299
+  },
+  "respawn": {
+    "death_verified": true,
+    "respawn_health": 20,
+    "inventory_preserved": true,
+    "swimming_controls_cleared": true,
+    "native_warp_no_fall_damage": true,
+    "scene_position": {
+      "version": "1",
+      "tick": "3316",
+      "ack": "17534",
+      "level": "912",
+      "x": "20.0",
+      "y": "80.0",
+      "z": "8.0",
+      "yaw": "0.0",
+      "pitch": "0.0",
+      "health": "20.0",
+      "air": "300.0",
+      "food": "20",
+      "flags": "0",
+      "mining": "-1",
+      "slot": "0"
+    }
+  },
+  "notVerified": [
+    "King Boo introduction/attack/reward collection",
+    "Eyerok activation/attack/reward collection",
+    "first and second Bowser key variants"
+  ],
+  "checks": {
+    "nativeBuild": "passed, including native image/import guards",
+    "smoke_clsn": "passed",
+    "smoke_actor": "blocked by existing unresolved ModelAnim destructor and func_0206e2f8 links",
+    "port_refcheck": "could not establish CMake selection: unsupported cmake_parse_arguments; 0 stale manifest references"
+  },
+  "capture": {
+    "path": "build/steve/steve-bowser-automated.mp4",
+    "sha256": "562e3e4d6a8001b176ffa30b2b61fad89a003da04aec14fc72827676af128ddd",
+    "description": "Silent automated in-game verification; fixture positions the player, uses real aim/punch/physics/reward collision; no boss teleport or fabricated save flag",
+    "encodedDecodeCheck": "passed"
+  }
+}

@@ -8,6 +8,7 @@
 // port grows real ones with the audio/fader gates.
 
 #include <cstdio>
+#include "../steve/native.h"
 
 struct Vector3 { int x, y, z; };
 struct Actor;
@@ -312,7 +313,10 @@ void SurfaceInfo::CopyNormalTo(Vector3 &v) const
 
 struct SphereClsn { int DetectClsn(); };
 extern "C" int _ZN12dBgCh_SphCrr10DetectClsnEv(void *self)
-{ return ((SphereClsn *)self)->DetectClsn(); }
+{
+    steve::native_prepare_collision();
+    return steve::native_support_sphere(self,((SphereClsn *)self)->DetectClsn());
+}
 
 struct Message { void Update(); static void AddChar(char c); };
 extern "C" void _ZN7Message6UpdateEv(void *self)
