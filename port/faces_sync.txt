@@ -1205,7 +1205,6 @@ __ZN10dBgActor_c4KillEv                                                  ?Kill@d
 __ZN10dBgActor_cC2Ev                                                     ??0dBgActor_c@@QAE@XZ                                            0x020eea50 R
 __ZN10dBgActor_cD1Ev                                                     ??1dBgActor_c@@UAE@XZ                                            0x020ee42c R
 
-__ZN10dBgCh_Actr16UpdateContinuousEv                                     ?UpdateContinuous@dBgCh_Actr@@QAEXXZ                             0x020366b4 R
 __ZN10dBgCh_Actr20UpdateExtraContinousEv                                 ?UpdateExtraContinous@dBgCh_Actr@@QAEXXZ                         0x020358ac R
 __ZN10dBgCh_Actr22UpdateContinuousNoLavaEv                               ?UpdateContinuousNoLava@dBgCh_Actr@@QAEXXZ                       0x02036318 R
 __ZN10dBgCh_ActrC1Ev                                                     ??0dBgCh_Actr@@QAE@XZ                                            0x02037430 R

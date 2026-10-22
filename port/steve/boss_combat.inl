@@ -24,6 +24,9 @@ const BossProfile bossProfiles[]={
 };
 struct BossMotion {
     Vec pos{},velocity{},safe{}; unsigned lastPunch{},age{},clipMask{},actor{}; bool flying{},rewarded{},hasSafe{};
+    int health{},maximum{};
+    signed char area{-1};
+    unsigned lastStep{};
 };
 using BossBehavior=int (__fastcall *)(void*,void*);
 std::map<void**,BossBehavior> bossBehaviors;
@@ -32,6 +35,8 @@ dActor_c* targetBoss{};
 unsigned bossClock{},punchAnimation{};
 unsigned combatReward{},combatDefeatClock{};
 unsigned combatTarget{};
+bool combatExitOpened{};
+Cell combatExitCell{};
 unsigned combatRewardActor{},combatRewardIndex{},combatKeyBefore{};
 bool combatCollectionLogged{};
 int bossLevel=-1;
@@ -39,8 +44,39 @@ const BossProfile* bossProfile(unsigned id) {
     for(const auto& p:bossProfiles) if(p.id==id)return &p;
     return nullptr;
 }
+const char* bossName(dActor_c* a) {return a->actorID==210 && port_level_id()==47?"King Boo":bossProfile(a->actorID)->name;}
 Vec actorPosition(dActor_c* a) {return {a->mPosX/fix,a->mPosY/fix,a->mPosZ/fix};}
+unsigned bossHealthOwner(dActor_c* a) {
+    if(a->actorID==176 && static_cast<Eyerok*>(a)->mPartIdx!=0)
+        for(auto* p=dActor_c::FindWithActorID(176,nullptr);p;p=dActor_c::FindWithActorID(176,p)) {
+            auto* parent=static_cast<Eyerok*>(p);
+            if(parent->mPartIdx==0 && (parent->mHandUniqueID1==int(a->uniqueID) || parent->mHandUniqueID2==int(a->uniqueID)))return p->uniqueID;
+        }
+    return a->uniqueID;
+}
+BossMotion& bossHealth(dActor_c* a) {
+    auto& h=bossMotions[bossHealthOwner(a)];
+    if(!h.maximum)h.health=h.maximum=a->actorID==279?2000:(a->actorID==165 || a->actorID==176 || (a->actorID==210 && port_level_id()==47))?1000:0;
+    return h;
+}
+int bossDamage() {
+    const auto& held=client.state.inventory[std::clamp(client.state.selected,0,8)];
+    std::string item=held.count?assets.item(held.id):"";
+    if(item=="netherite_sword")return 8;
+    if(item=="diamond_sword")return 7;
+    if(item=="iron_sword")return 6;
+    if(item=="stone_sword")return 5;
+    if(item=="wooden_sword" || item=="golden_sword")return 4;
+    return 1;
+}
 void actorPosition(dActor_c* a,Vec p) {a->mPosX=int(p.x*fix);a->mPosY=int(p.y*fix);a->mPosZ=int(p.z*fix);}
+extern "C" void ChangeArea(int);
+void combatPlayerPosition(Player* p,Vec at,int area) {
+    actorPosition(p,at);p->mPrevPosX=p->mPosX;p->mPrevPosY=p->mPosY;p->mPrevPosZ=p->mPosZ;
+    p->mHorzSpeed=p->mVertSpeed=p->unk_0a4=p->unk_0ac=0;
+    if(area>=0){p->mAreaId=area;if(data_02092120!=area)ChangeArea(area);}
+    previousPosition=at;
+}
 bool liveBoss(dActor_c* a) {
     if(!a || !bossProfile(a->actorID) || a->aliveState==2 || a->shouldBeKilled)return false;
     if(a->actorID==216 && static_cast<BigBully*>(a)->mNumBulliesKilled<3)return false;
@@ -125,6 +161,18 @@ void defeatBoss(dActor_c* a,BossMotion& m) {
     // Set the latch BEFORE spawning: a second punch or a second hand cannot
     // spawn another reward. The reward appears on the last safe platform.
     m.rewarded=true;m.flying=false;
+    a->mAreaId=m.area;
+    // A player can mine the last platform after the hit. Rewards must return
+    // to remaining supported terrain, rather than falling through that hole.
+    float rewardFloor;
+    if(!bossGround({m.safe.x,m.safe.y+8,m.safe.z},a,rewardFloor) || std::abs(rewardFloor-m.safe.y)>160) {
+        bool found=false;
+        for(int radius=100;radius<=600 && !found;radius+=100)
+            for(Vec offset:std::array<Vec,4>{{{1,0,0},{-1,0,0},{0,0,1},{0,0,-1}}}) {
+                Vec candidate{m.safe.x+offset.x*radius,m.safe.y+8,m.safe.z+offset.z*radius};
+                if(bossGround(candidate,a,rewardFloor) && std::abs(rewardFloor-m.safe.y)<160){m.safe={candidate.x,rewardFloor,candidate.z};found=true;break;}
+            }
+    }
     Vec fallen=actorPosition(a);actorPosition(a,m.safe);
     Vector3 at{a->mPosX,a->mPosY+100*4096,a->mPosZ};
     dActor_c* reward=nullptr;
@@ -166,7 +214,7 @@ void defeatBoss(dActor_c* a,BossMotion& m) {
         combatReward=reward->uniqueID;combatDefeatClock=bossClock;combatCollectionLogged=false;
         combatRewardActor=reward->actorID;combatRewardIndex=reward->param1&15;combatKeyBefore=unsigned(data_0209caa0[1]);
     }
-    std::fprintf(stderr,"[steve-boss] defeat id=%u name=%s fall=%.1f reward=%u safe=(%.1f,%.1f,%.1f)\n",a->actorID,bossProfile(a->actorID)->name,m.safe.y-fallen.y,reward?reward->actorID:0,m.safe.x,m.safe.y,m.safe.z);
+    std::fprintf(stderr,"[steve-boss] defeat id=%u name=%s fall=%.1f reward=%u safe=(%.1f,%.1f,%.1f)\n",a->actorID,bossName(a),m.safe.y-fallen.y,reward?reward->actorID:0,m.safe.x,m.safe.y,m.safe.z);
     actorPosition(a,fallen);a->MarkForDestruction();
 }
 void stopBossAtWall(dActor_c* a,BossMotion& m,Vec previous) {
@@ -202,8 +250,13 @@ int __fastcall bossBehavior(void* object,void*) {
         }
         return result;
     }
-    if(data_0209fc48 || data_0209f2c4)return 1;
+    if(data_0209fc48 || data_0209f2c4) {
+        if(std::getenv("SM64DS_STEVE_TEST_COMBAT") && bossClock%60==0)std::fprintf(stderr,"[steve-boss-test] paused id=%u script=%x pause=%u\n",a->actorID,data_0209fc48,data_0209f2c4);
+        return 1;
+    }
     auto& m=motion->second;Vec previous=m.pos;
+    if(m.lastStep==bossClock)return 1;
+    m.lastStep=bossClock;
     if(std::getenv("SM64DS_STEVE_TEST_COMBAT") && m.age%15==0)std::fprintf(stderr,"[steve-boss-test] physics id=%u age=%u y=%.1f\n",a->actorID,m.age,m.pos.y);
     m.velocity.y=std::max(-90.f,m.velocity.y-2.f);m.pos.x+=m.velocity.x;m.pos.y+=m.velocity.y;m.pos.z+=m.velocity.z;++m.age;
     stopBossAtWall(a,m,previous);
@@ -215,6 +268,7 @@ int __fastcall bossBehavior(void* object,void*) {
             defeatBoss(a,m);return 1;
         }
         m.flying=false;m.safe=m.pos;m.hasSafe=true;
+        a->mAreaId=m.area;
         a->mFlags|=m.clipMask;
         a->mVertSpeed=a->mHorzSpeed=0;if(auto* mesh=bossMesh(a))mesh->SetGroundFlag();
         std::fprintf(stderr,"[steve-boss] landed id=%u frames=%u\n",a->actorID,m.age);
@@ -246,18 +300,25 @@ bool punchBoss(dActor_c* a) {
             else if(bossGround({player.x,player.y+8,player.z},static_cast<dActor_c*>(local()),floor)) {m.safe={player.x,floor,player.z};m.hasSafe=true;}
             else return false;
         }
-        m.age=0;m.clipMask=a->mFlags&0x10001;
+        m.age=0;m.clipMask=a->mFlags&0x10001;m.area=a->mAreaId;
+    }
+    auto& health=bossHealth(a);
+    if(health.maximum) {
+        int damage=bossDamage();health.health=std::max(0,health.health-damage);
+        std::fprintf(stderr,"[steve-boss] damage id=%u amount=%d hp=%d maximum=%d\n",a->actorID,damage,health.health,health.maximum);
+        if(!health.health && m.hasSafe){m.lastPunch=bossClock;punchAnimation=10;defeatBoss(a,m);return true;}
     }
     // Thrown actors must keep falling outside the camera. Render culling
     // remains active; only the two behavior-culling bits are suspended.
     a->mFlags&=~0x10001u;
+    a->mAreaId=-1; // A thrown actor keeps simulating after the player changes rooms.
     m.pos=p;m.velocity={dx/length*75,35,dz/length*75};m.lastPunch=bossClock;m.flying=true;punchAnimation=10;
-    std::fprintf(stderr,"[steve-boss] punch id=%u name=%s pos=(%.1f,%.1f,%.1f) velocity=(%.1f,%.1f,%.1f)\n",a->actorID,bossProfile(a->actorID)->name,p.x,p.y,p.z,m.velocity.x,m.velocity.y,m.velocity.z);
+    std::fprintf(stderr,"[steve-boss] punch id=%u name=%s pos=(%.1f,%.1f,%.1f) velocity=(%.1f,%.1f,%.1f)\n",a->actorID,bossName(a),p.x,p.y,p.z,m.velocity.x,m.velocity.y,m.velocity.z);
     return true;
 }
 void bossFrame() {
     ++bossClock;if(punchAnimation)--punchAnimation;
-    int level=port_level_id();if(level!=bossLevel){bossMotions.clear();targetBoss=nullptr;bossLevel=level;combatReward=0;combatTarget=0;}
+    int level=port_level_id();if(level!=bossLevel){bossMotions.clear();targetBoss=nullptr;bossLevel=level;combatReward=0;combatTarget=0;combatExitOpened=false;}
     std::set<unsigned> alive;
     for(dActor_c* a=dActor_c::Next(nullptr);a;a=dActor_c::Next(a)) {
         if(!liveBoss(a))continue;alive.insert(a->uniqueID);
@@ -274,6 +335,10 @@ void bossFrame() {
                 VirtualProtect(table+6,sizeof(void*),protection,&ignored);
             }
         }
+        // Kinematic throws belong to the host update, even when Nintendo's
+        // BeforeBehavior room gate skips the actor. lastStep prevents the
+        // seated Behavior callback from integrating the same frame twice.
+        if(motion.flying)bossBehavior(a,nullptr);
     }
     for(auto it=bossMotions.begin();it!=bossMotions.end();)if(!alive.count(it->first)) {
         if(it->second.lastPunch && it->second.actor>=200 && it->second.actor<=204)std::fprintf(stderr,"[steve-boss-test] native-enemy-defeated id=%u uid=%u\n",it->second.actor,it->first);
@@ -282,10 +347,22 @@ void bossFrame() {
     // Headless fixture: position the PLAYER, then use the same reach/aim/punch
     // path as mouse input. Never move the enemy or manufacture a defeat.
     const char* test=std::getenv("SM64DS_STEVE_TEST_COMBAT");
+    if(test && std::atoi(test)==210 && bossClock%60==0)
+        for(auto* a=dActor_c::FindWithActorID(210,nullptr);a;a=dActor_c::FindWithActorID(210,a)) {
+            auto* b=static_cast<daTrs_c*>(a);Vec p=actorPosition(a);
+            auto* talk=*reinterpret_cast<Player**>(reinterpret_cast<char*>(a)+0x488);Vec t=talk?actorPosition(talk):Vec{};
+            std::fprintf(stderr,"[steve-boss-test] Boo state=%u step=%u alpha=%u area=%d home=%d pos=(%.1f,%.1f,%.1f) talkLocal=%d talk=(%.1f,%.1f,%.1f)\n",b->unk_5cc,reinterpret_cast<unsigned char*>(a)[0x5ce],b->unk_5c8,a->mAreaId,reinterpret_cast<signed char*>(a)[0x5d0],p.x,p.y,p.z,talk==local(),t.x,t.y,t.z);
+        }
     // Enter King Boo's real Mirror Luigi trigger before aiming at the boss;
     // his pre-cutscene actor is parked outside the playable room.
-    if(test && std::atoi(test)==210 && level==47 && local() && bossClock<400 && !scripted(local()))
-        actorPosition(static_cast<Player*>(local()),{0,0,0});
+    if(test && std::atoi(test)==210 && level==47 && local() && bossClock>=40 && bossClock<600 && !scripted(local()))
+        combatPlayerPosition(static_cast<Player*>(local()),{-150,0,0},-1);
+    if(test && std::atoi(test)==176 && local() && bossClock==40) {
+        for(auto* a=dActor_c::FindWithActorID(176,nullptr);a;a=dActor_c::FindWithActorID(176,a))if(static_cast<Eyerok*>(a)->mPartIdx==0) {
+            Vec at=actorPosition(a);at.z-=200;combatPlayerPosition(static_cast<Player*>(local()),at,a->mAreaId);
+            std::fprintf(stderr,"[steve-boss-test] enter Eyerok at=(%.1f,%.1f,%.1f)\n",at.x,at.y,at.z);
+        }
+    }
     if(test && local() && bossClock==40) {
         unsigned id=unsigned(std::atoi(test));
         if(id>=200 && id<=204 && !dActor_c::FindWithActorID(id,nullptr)) {
@@ -308,7 +385,7 @@ void bossFrame() {
             bool ready=true;
             if(reward->actorID==282 || reward->actorID==283)ready=(static_cast<Key*>(reward)->mdCcAcPos_c.flags&1)==0;
             if(ready) {
-                actorPosition(static_cast<Player*>(local()),actorPosition(reward));
+                combatPlayerPosition(static_cast<Player*>(local()),actorPosition(reward),reward->mAreaId);
                 static_cast<Player*>(local())->mVertSpeed=0;
                 if((bossClock-combatDefeatClock)%30==0)std::fprintf(stderr,"[steve-boss-test] collect-contact reward=%u id=%u\n",combatReward,reward->actorID);
             } else if((bossClock-combatDefeatClock)%60==0)std::fprintf(stderr,"[steve-boss-test] reward-wait id=%u stage=%u y=%.1f\n",reward->actorID,static_cast<Key*>(reward)->unk_442,reward->mPosY/fix);
@@ -320,14 +397,37 @@ void bossFrame() {
         if(a && !combatTarget)combatTarget=a->uniqueID;
         if(a && liveBoss(a) && !bossMotions[a->uniqueID].flying) {
             auto* player=static_cast<Player*>(local());Vec p=actorPosition(a);Vec start{p.x,p.y,p.z-360};
-            float groundY=0;bool support=bossGround({p.x,p.y+2000,p.z},a,groundY);
-            if(support && groundY>start.y)start.y=groundY;
+            if(id==210 && std::getenv("SM64DS_STEVE_TEST_COMBAT_EXIT") && bossMotions[a->uniqueID].age && !combatExitOpened) {
+                float floor;
+                if(bossGround({p.x,p.y+8,p.z},a,floor)) {
+                    combatExitCell=cell({p.x,floor,p.z});combatExitOpened=true;
+                    for(int x=-1;x<=1;x++)for(int z=-1;z<=1;z++) {
+                        Cell c{combatExitCell.x+x,combatExitCell.y,combatExitCell.z+z};
+                        client.send("terrain\t"+coordinates(c)+"\tgrass_block");terrain.insert(c);
+                        client.send("block\t"+coordinates(c)+"\tair");
+                    }
+                    std::fprintf(stderr,"[steve-boss-test] opening floor through IPC cell=(%d,%d,%d)\n",combatExitCell.x,combatExitCell.y,combatExitCell.z);
+                    return;
+                }
+            }
+            if(combatExitOpened && !holes.count(combatExitCell))return;
+            if(combatExitOpened)std::fprintf(stderr,"[steve-boss-test] floor opening acknowledged\n");
+            int area=a->mAreaId;
+            if(id==210 && area<0)area=reinterpret_cast<signed char*>(a)[0x5d0];
+            if(area>=0 && data_02092120!=area)ChangeArea(area);
+            float groundY=0;bool support=bossGround({p.x,p.y+8,p.z},a,groundY);
+            // Approach from real supported terrain, rather than parking the
+            // player beyond a small arena's edge while the boss is airborne.
+            for(Vec offset:std::array<Vec,4>{{{0,0,-360},{360,0,0},{-360,0,0},{0,0,360}}}) {
+                Vec candidate{p.x+offset.x,p.y+8,p.z+offset.z};float floor;
+                if(bossGround(candidate,a,floor) && std::abs(floor-p.y)<600) {start={candidate.x,floor,candidate.z};break;}
+            }
             std::fprintf(stderr,"[steve-boss-test] support=%d floor=%.1f foot=%.1f player=%.1f\n",support,groundY,p.y,player->mPosY/fix);
-            actorPosition(player,start);player->mVertSpeed=0;
-            eye=start;eye.y+=162;direction={0,(p.y+bossProfile(id)->height*.5f-eye.y),360};
-            float length=std::sqrt(direction.y*direction.y+direction.z*direction.z);direction.y/=length;direction.z/=length;
+            combatPlayerPosition(player,start,area);
+            eye=start;eye.y+=162;direction={p.x-eye.x,(p.y+bossProfile(id)->height*.5f-eye.y),p.z-eye.z};
+            float length=std::sqrt(direction.x*direction.x+direction.y*direction.y+direction.z*direction.z);direction.x/=length;direction.y/=length;direction.z/=length;
             targetDistance=500;targetEntity=-1;aimBoss();
-            std::fprintf(stderr,"[steve-boss-test] aim expected=%u actual=%u script=%x control=%u\n",id,targetBoss?targetBoss->actorID:0,data_0209fc48,player->mIsNoControl);
+            std::fprintf(stderr,"[steve-boss-test] aim expected=%u actual=%u script=%x control=%u area=%d targetArea=%d\n",id,targetBoss?targetBoss->actorID:0,data_0209fc48,player->mIsNoControl,player->mAreaId,a->mAreaId);
             if(targetBoss)punchBoss(targetBoss);
         }
     }

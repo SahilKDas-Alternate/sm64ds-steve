@@ -1,0 +1,128 @@
+{
+  "release": "Tango v0.9.2",
+  "releaseCommit": "66c188cfea5a2404634f8e4f584478294fd11a5f",
+  "baseSteveCommit": "e5f305c44",
+  "verificationDate": "2026-10-21",
+  "scope": "Host port only; no recovered src/ or include/ changes",
+  "executableSha256": "bbdbafaf610d562de5ab8def460c9d6133d28c094ff726885a911972c2825ace",
+  "maximumHP": {
+    "BowserAllVariants": 2000,
+    "KingBoo": 1000,
+    "EyerokSharedAcrossHands": 1000,
+    "WhompKing": 1000
+  },
+  "finalBuildInGameCases": [
+    {
+      "frames": 1100,
+      "nativeEnemy": false,
+      "faults": 0,
+      "floorOpening": true,
+      "maximumHP": 1000,
+      "scene": 1009,
+      "exitCode": 0,
+      "actor": 210,
+      "level": 47,
+      "weapon": "diamond_sword",
+      "evidence": [
+        "[steve-boss] damage id=210 amount=7 hp=993 maximum=1000",
+        "[steve-boss] punch id=210 name=King Boo pos=(-314.5,2.0,455.2) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] landed id=210 frames=35",
+        "[steve-boss-test] floor opening acknowledged",
+        "[steve-boss] damage id=210 amount=7 hp=986 maximum=1000",
+        "[steve-boss] punch id=210 name=King Boo pos=(-314.5,2.0,1430.2) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=210 name=King Boo fall=609.0 reward=282 safe=(-114.5,0.0,1430.2)",
+        "[steve-boss-test] reward-collected actor=282 index=3 save=10 before=0 event1d=536870912"
+      ]
+    },
+    {
+      "frames": 650,
+      "nativeEnemy": false,
+      "faults": 0,
+      "floorOpening": false,
+      "maximumHP": 1000,
+      "scene": 977,
+      "exitCode": 0,
+      "actor": 176,
+      "level": 17,
+      "weapon": "air",
+      "evidence": [
+        "[steve-boss] damage id=176 amount=1 hp=999 maximum=1000",
+        "[steve-boss] punch id=176 name=Eyerok pos=(-315.8,-1241.0,-3369.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=176 name=Eyerok fall=608.5 reward=178 safe=(403.0,-1499.5,-3324.0)",
+        "[steve-boss-test] reward-collected actor=178 index=4 save=0 before=0 event1d=536870912"
+      ]
+    },
+    {
+      "frames": 750,
+      "nativeEnemy": false,
+      "faults": 0,
+      "floorOpening": false,
+      "maximumHP": 2000,
+      "scene": 1000,
+      "exitCode": 0,
+      "actor": 279,
+      "level": 40,
+      "weapon": "air",
+      "evidence": [
+        "[steve-boss] damage id=279 amount=1 hp=1999 maximum=2000",
+        "[steve-boss] punch id=279 name=Bowser pos=(-5.0,300.0,-761.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] landed id=279 frames=35",
+        "[steve-boss] damage id=279 amount=1 hp=1998 maximum=2000",
+        "[steve-boss] punch id=279 name=Bowser pos=(-5.0,300.0,1864.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=279 name=Bowser fall=611.3 reward=283 safe=(-5.0,300.3,1864.0)",
+        "[steve-boss-test] reward-collected actor=283 index=7 save=0 before=0 event1d=536870912"
+      ]
+    },
+    {
+      "frames": 450,
+      "nativeEnemy": false,
+      "faults": 0,
+      "floorOpening": false,
+      "maximumHP": 1000,
+      "scene": 967,
+      "exitCode": 0,
+      "actor": 165,
+      "level": 7,
+      "weapon": "diamond_sword",
+      "evidence": [
+        "[steve-boss] damage id=165 amount=7 hp=993 maximum=1000",
+        "[steve-boss] punch id=165 name=Whomp King pos=(704.0,3500.0,705.0) velocity=(0.0,35.0,75.0)",
+        "[steve-boss] defeat id=165 name=Whomp King fall=611.0 reward=178 safe=(704.0,3500.0,705.0)",
+        "[steve-boss-test] reward-collected actor=178 index=1 save=0 before=0 event1d=536870912"
+      ]
+    }
+  ],
+  "additionalEarlierBuildEyerokSwordCheck": {
+    "evidence": [
+      "[steve-boss] damage id=176 amount=7 hp=993 maximum=1000",
+      "[steve-boss] punch id=176 name=Eyerok pos=(-315.8,-1241.0,-3369.0) velocity=(0.0,35.0,75.0)",
+      "[steve-boss] defeat id=176 name=Eyerok fall=608.5 reward=178 safe=(403.0,-1499.5,-3324.0)",
+      "[steve-boss-test] reward-collected actor=178 index=4 save=0 before=0 event1d=536870912"
+    ],
+    "nativeEnemy": false,
+    "weapon": "diamond_sword",
+    "exitCode": 0,
+    "faults": 0,
+    "actor": 176,
+    "level": 17,
+    "maximumHP": 1000,
+    "frames": 600
+  },
+  "verificationMethod": "Automated native gameplay: scripted player positioning and normal aim/attack path; real native knockback, gravity, collisions, actor rewards and collection bookkeeping. No boss teleport, fabricated defeat, or fabricated save flags.",
+  "kingBooFloorOpening": "Enclosed arena; the fixture prepares a 3x3 floor opening with terrain imports and block-air requests over authenticated IPC. It waits for the resulting native hole acknowledgment before attacking again. This is world setup equivalent to the resulting mined terrain edits, not a manual mining recording.",
+  "healthVictoryRoutes": "HP depletion uses native rewards; falling into the void also defeats a boss before HP reaches zero. Final checks exercised the void route, not full 1000/2000-point depletion.",
+  "checks": {
+    "nativeBuild": "passed, including image, face-cycle, globals and import guards",
+    "smoke_clsn": "passed over real KCL data",
+    "gitDiffCheck": "passed",
+    "port_refcheck": "cannot prove CMake symbol/host selections: unsupported cmake_parse_arguments (pre-existing parser limitation); all 234 manifest references checked with 0 stale paths"
+  },
+  "preservation": {
+    "qaArchive": "build/steve/qa-world-boss-hp.zip",
+    "qaArchiveCRCVerified": true,
+    "restoredOriginal": "build/steve/pre-combat-progress.zip",
+    "restoredFileCRCVerified": true
+  },
+  "workspaceLimitBytes": 1073741824,
+  "workspaceBytesAfterRestore": 952395912
+}

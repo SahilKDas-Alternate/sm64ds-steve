@@ -367,6 +367,13 @@ void hud() {
     }
     if(submerged || client.state.air<300) for(int i=0;i<std::max(0,(client.state.air+29)/30);i++) uiQuad(bx+(172-i*8)*s,by-24*s,9*s,9*s,icons,16,18,25,27);
     uiQuad(x+w/2-8*s,y+h/2-8*s,16*s,16*s,icons,0,0,16,16);
+    if(targetBoss) {
+        auto& health=bossHealth(targetBoss);
+        if(health.maximum) {
+            std::string label=std::string(bossName(targetBoss))+" "+std::to_string(health.health)+"/"+std::to_string(health.maximum);
+            text(x+6*s,y+20*s,label,s);
+        }
+    }
     if(client.state.mining>=0) {uiQuad(x+w/2-30*s,y+h/2+14*s,60*s,3*s,nullptr,0,0,1,1,0xff202020u);uiQuad(x+w/2-30*s,y+h/2+14*s,(client.state.mining+1)*6*s,3*s,nullptr,0,0,1,1,0xffc8c8c8u);}
     if(inventoryOpen) {
         float mh=menuHeight();s=std::min(s,(h-8)/mh);float width=176*s,height=mh*s,ux=x+(w-width)/2,uy=y+(h-height)/2;
@@ -897,6 +904,7 @@ struct Register {
     Register() {
         ntr::gx_host_triangle_filter=cutStage;
         collision_prepare_hook=port_clsn_prepare_dispatch;sphere_support_hook=port_steve_sphere_support;
+        continuous_override_hook=port_steve_override_continuous;
         enabled_hook=enabled_impl;frame_hook=frame_impl;before_hook=before_impl;after_hook=after_impl;
         player_render_hook=render_player_impl;world_render_hook=render_world_impl;removed_hook=removed_impl;
           health_hook=health_impl;

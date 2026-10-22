@@ -202,11 +202,6 @@
       "slot": "0"
     }
   },
-  "notVerified": [
-    "King Boo introduction/attack/reward collection",
-    "Eyerok activation/attack/reward collection",
-    "first and second Bowser key variants"
-  ],
   "checks": {
     "nativeBuild": "passed, including native image/import guards",
     "smoke_clsn": "passed",
@@ -218,5 +213,11 @@
     "sha256": "562e3e4d6a8001b176ffa30b2b61fad89a003da04aec14fc72827676af128ddd",
     "description": "Silent automated in-game verification; fixture positions the player, uses real aim/punch/physics/reward collision; no boss teleport or fabricated save flag",
     "encodedDecodeCheck": "passed"
-  }
+  },
+  "notVerifiedAtThatRevision": [
+    "King Boo introduction/attack/reward collection",
+    "Eyerok activation/attack/reward collection",
+    "first and second Bowser key variants"
+  ],
+  "supersededForKingBooEyerokAndHP": "notes/steve/boss-hp-verification.json"
 }

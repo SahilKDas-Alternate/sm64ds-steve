@@ -289,6 +289,12 @@ void Scene::StartSceneFade(unsigned, unsigned, unsigned short) {}
    purpose: with this face reaching real code, RaycastLine::DetectClsn becomes an
    ordinary terminating two-hop forwarder for whatever still spells it that way. */
 struct dBgCh_Lin { bool DetectClsn(); };
+struct dBgCh_Actr { void UpdateContinuous(); };
+extern "C" void _ZN10dBgCh_Actr16UpdateContinuousEv(void *self)
+{
+    if(steve::native_override_continuous(self))return;
+    ((dBgCh_Actr *)self)->UpdateContinuous();
+}
 extern "C" int _ZN9dBgCh_Lin10DetectClsnEv(void *self)
 { return ((dBgCh_Lin *)self)->dBgCh_Lin::DetectClsn() ? 1 : 0; }
 extern "C" int _ZNK10dBgCh_Actr13GetWallResultEv(const void *self)

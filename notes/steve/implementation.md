@@ -248,8 +248,33 @@ bubbles; `test-native.ps1 -SwimCoin` asserts depletion, pickup and a later serve
 acknowledgment. Respawn clears swimming input, pose and fall velocity.
 
 The Bowser MP4 is automated gameplay verification, not manual play. King Boo and
-Eyerok still fail activation/collection verification; their adapters must not be
-described as finished. The first two Bowser key variants also need separate
-in-game proof. No recovered `src/` or `include/` files changed. QA worlds are
+Eyerok failed activation/collection verification at that revision; those failures
+are resolved in `boss-hp-verification.json`. The first two Bowser key variants
+still need separate in-game proof. No recovered `src/` or `include/` files changed. QA worlds are
 CRC-checked ZIP archives; the preserved pre-combat world/player data is restored
 after testing. Raw capture frames are removed only after MP4 decode verification.
+
+The 2026-10-21 boss pass adds 2,000 HP for Bowser and 1,000 HP for King Boo,
+Whomp King and Eyerok (one shared pool for both hands), sword damage and aimed
+health labels. Airborne knockback now integrates once per host frame, including
+when Nintendo's room/behavior gate skips the actor. A thrown actor temporarily
+uses the global area and restores its original area on landing or reward spawn.
+Rewards search nearby intact floor if the previous safe floor has been mined.
+
+King Boo deliberately differs from the ordinary collision path in Steve mode:
+his introduction teleports out of an offstage holding position, so its previous
+position and stale contact records are synchronized. His body and reward use
+the native discrete sphere resolver. The mirror-room prism pass can produce a
+nonlocal horizontal correction of (-19,800, 27,000) for a radius-200 body; this
+room rejects corrections beyond four radii, preserving other floor/ceiling
+contacts and the ground fallback. Thrown bosses still use KCL wall rays.
+The explicit continuous-query bridge replaces its generated faces_sync row;
+other actors/levels retain the original continuous resolver.
+
+Final native runs verify King Boo's Luigi key, Eyerok's course star, Bowser's
+Grand Star and Whomp King's course star, with HP/damage assertions and zero
+recorded actor faults. King Boo's enclosed room uses a 3x3 floor opening prepared
+through real IPC edits; the fixture waits for acknowledgment before the void hit.
+Eyerok also passed a separate sword run. Build guards and real-KCL smoke pass.
+`port_refcheck` still cannot parse the existing `cmake_parse_arguments` command;
+its 234 manifest references have no stale paths. The report records that limit.

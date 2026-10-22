@@ -100,10 +100,19 @@ launch/death, coin and death-table code. Enclosed arenas still require an exit
 or a mined opening for a fall; a punch does not delete a wall.
 
 Verified native reward pickups: final Bowser, King Bob-omb, Whomp King,
-Big Bully, Chill Bully, Goomboss, Chief Chilly and Wiggler. Goomba and Koopa
-defeats also passed. King Boo and Eyerok remain unverified: their introductory
-states did not reach an attackable boss in the automated arena tests. Their
-reward adapters are present, but do not treat them as completed gameplay.
+Big Bully, Chill Bully, Goomboss, Chief Chilly, Wiggler, Eyerok and King Boo.
+Goomba and Koopa defeats also passed. King Boo's enclosed room was verified
+with a three by three floor opening prepared through IPC. The `-OpenFloor`
+fixture sends terrain imports and air edits, exercising the same synchronized
+terrain removal used after mining. Eyerok was verified in his original arena.
+
+Bowser has **2,000 HP** in each fight. King Boo, Whomp King and Eyerok have
+**1,000 HP** each; both Eyerok hands share that pool. Aimed bosses display their
+remaining HP. A fist deals 1 damage; wooden/golden, stone, iron, diamond and
+netherite swords deal 4, 5, 6, 7 and 8 respectively. Accepted hits have a
+12-frame cooldown. Depleting health uses the native reward path; a void fall
+also defeats the boss with health remaining. Ordinary Thwomps retain their
+existing behavior.
 
 Underwater coins refill oxygen through IPC and release visible bubbles. The full
 air meter stays visible underwater. Nintendo swimming retains its native controls;
@@ -116,6 +125,20 @@ Use `-Level 6 -Actor 189` for King Bob-omb, or `-Level 6 -Actor 200 -Enemy`
 for Goombas. These are automated fixtures, not a recording of manual play, and
 use disposable Nintendo save files. They change their separate Minecraft QA
 arenas; preserve the runtime world before running a test suite.
+
+Boss HP and reward checks (one game/IPC client at a time):
+
+```powershell
+./port/steve/test-combat.ps1 -Level 47 -Actor 210 -Frames 1100 -Weapon diamond_sword -OpenFloor -Scene 1009
+./port/steve/test-combat.ps1 -Level 17 -Actor 176 -Frames 650 -Weapon air
+./port/steve/test-combat.ps1 -Level 40 -Actor 279 -Frames 750 -Weapon air
+./port/steve/test-combat.ps1 -Level 7 -Actor 165 -Frames 450 -Weapon diamond_sword
+```
+
+Use a fresh QA scene when repeating the floor-opening test. The assertion
+requires the opening's actual IPC acknowledgment, a fall of at least 600 units
+for King Boo/Eyerok, and native reward collection. Reports include the equipped
+weapon and starting HP. `notes/steve/boss-hp-verification.json` records results.
 The adapter bounds cached cells to 65,536, active forced chunks to 128 and
 synchronized entities to 128. It uses the overworld as the arena backend.
 Visual snapshots cover up to 512 nearby block entities within 64 blocks, with
